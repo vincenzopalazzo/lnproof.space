@@ -18,7 +18,8 @@ import {
 	extractInvoiceFields,
 	INVOICE_TLV_NAMES,
 	INVOICE_REQUEST_TLV_NAMES,
-	OFFER_TLV_NAMES
+	OFFER_TLV_NAMES,
+	PAYER_PROOF_TLV_NAMES
 } from 'bolt12-utils';
 import { sha256 } from '@noble/hashes/sha2';
 import { fmt, short, toHex, mk, type Field, type CheckResult, type DisclosureRow, type TlvRow } from './format';
@@ -108,20 +109,14 @@ function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
 	return true;
 }
 
-const PP_NAMES = new Map<bigint, string>([
-	[242n, 'preimage'],
-	[244n, 'omitted_tlvs'],
-	[246n, 'missing_hashes'],
-	[248n, 'leaf_hashes'],
-	[250n, 'payer_signature']
-]);
-
 function tlvName(type: bigint): string {
 	return (
 		INVOICE_TLV_NAMES.get(type) ??
 		INVOICE_REQUEST_TLV_NAMES.get(type) ??
 		OFFER_TLV_NAMES.get(type) ??
-		PP_NAMES.get(type) ??
+		// bolt12-utils 0.1.2 moved the payer-proof TLVs (proof_signature 241,
+		// proof_preimage 1001, proof_omitted_tlvs 1002, …1005) into this map.
+		PAYER_PROOF_TLV_NAMES.get(type) ??
 		`type ${type}`
 	);
 }
@@ -139,7 +134,7 @@ function tlvValue(type: bigint, value: Uint8Array): string {
 	if (TEXT_TYPES.has(type)) return '"' + td.decode(value) + '"';
 	if (AMOUNT_TYPES.has(type)) return readUintBE(value).toString() + ' msat';
 	if (type === 164n) return readUintBE(value).toString() + ' (' + formatTimestamp(readUintBE(value)).slice(0, 10) + ')';
-	if (type === 244n) return readUintBE(value).toString(); // omitted marker count is implicit; show raw
+	if (type === 1002n) return readUintBE(value).toString(); // proof_omitted_tlvs markers; show raw
 	return short(toHex(value), 12, 8);
 }
 
@@ -261,7 +256,7 @@ function decodeProofView(raw: string): ProofView {
 		paymentHash,
 		preimage,
 		payerKey,
-		payerNote: proof.payerNote || '',
+		payerNote: proof.proofNote || '',
 		created,
 		merkle,
 		verify,
