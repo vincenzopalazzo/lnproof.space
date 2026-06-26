@@ -1,0 +1,12 @@
+{
+	// Cloudflare Pages config (source of truth — overrides the dashboard build
+	// settings). This project builds with @sveltejs/adapter-static, which writes
+	// the static site to `build/` — NOT the `.svelte-kit/cloudflare` directory
+	// that Cloudflare's SvelteKit auto-detection assumes.
+	//
+	// `name` must match the Pages project name. No Functions / bindings: the app
+	// is a pure client-side SPA, deployed as static assets only.
+	"name": "lnproof-space",
+	"pages_build_output_dir": "build",
+	"compatibility_date": "2026-06-26"
+}
