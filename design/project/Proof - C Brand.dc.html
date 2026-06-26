@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#0b0612}
+  ::selection{background:#b78bff;color:#0b0612}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @keyframes tick{0%{transform:scale(.2)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+  @keyframes ringIn{from{stroke-dashoffset:339}to{stroke-dashoffset:0}}
+  @keyframes floatGlow{0%,100%{opacity:.5}50%{opacity:.9}}
+  @keyframes barGrow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</helmet>
+<div style="min-height:100vh;background:radial-gradient(900px 500px at 80% -5%, #2a0f55, transparent 55%), radial-gradient(700px 500px at 0% 100%, #1a0a3a, transparent 50%), #0b0612;color:#f3eefe;font-family:'Sora',system-ui,sans-serif;padding:40px 22px;display:flex;justify-content:center">
+  <div style="width:100%;max-width:680px">
+
+    <!-- top bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:26px">
+      <div style="display:flex;align-items:center;gap:11px">
+        <span style="display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:linear-gradient(140deg,#c79bff,#7c3aed)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#0b0612"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>
+        </span>
+        <span style="font-weight:700;font-size:17px">lnproof</span>
+      </div>
+      <span style="font-family:'JetBrains Mono';font-size:11px;color:#a78bce;border:1px solid #3a2a5c;border-radius:100px;padding:5px 12px">BOLT12 · #1295</span>
+    </div>
+
+    <!-- hero -->
+    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px;padding:8px 0 30px">
+      <!-- ring + check -->
+      <div style="position:relative;width:128px;height:128px;display:grid;place-items:center">
+        <div style="position:absolute;inset:-10px;border-radius:50%;background:radial-gradient(circle,#9d6bff44,transparent 65%);animation:floatGlow 3s ease-in-out infinite"></div>
+        <svg width="128" height="128" viewBox="0 0 128 128" style="position:absolute;transform:rotate(-90deg)">
+          <circle cx="64" cy="64" r="54" fill="none" stroke="#2a1c47" stroke-width="6"/>
+          <circle cx="64" cy="64" r="54" fill="none" stroke="url(#g)" stroke-width="6" stroke-linecap="round" stroke-dasharray="339" style="animation:ringIn 1.4s ease both"/>
+          <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c79bff"/><stop offset="1" stop-color="#6d28d9"/></linearGradient></defs>
+        </svg>
+        <svg style="position:relative;animation:tick .5s cubic-bezier(.2,1.3,.5,1) .7s both" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#c79bff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:9px;animation:rise .6s ease both">
+        <span style="font-size:12.5px;font-weight:700;letter-spacing:.22em;color:#b78bff">PAYMENT VERIFIED</span>
+        <div style="font-size:clamp(40px,9vw,68px);font-weight:800;letter-spacing:-.035em;line-height:1">50,000 <span style="font-weight:500;color:#a78bce;font-size:.42em">sats</span></div>
+        <div style="font-size:16px;color:#cbbce8">to <strong style="color:#fff;font-weight:600">vincenzopalazzo</strong> · Support BOLT12 development</div>
+      </div>
+
+      <div style="display:inline-flex;align-items:center;gap:9px;padding:10px 16px;border-radius:13px;background:#1a1030;border:1px solid #3a2a5c;font-size:14px;color:#cbbce8;animation:rise .6s ease .1s both">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#b78bff" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <em style="font-style:italic">"Thanks for your work on Core Lightning!"</em>
+      </div>
+    </div>
+
+    <!-- verification chips -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:14px">
+      <sc-for list="{{ checks }}" as="c" hint-placeholder-count="4">
+        <div style="display:flex;align-items:center;gap:11px;padding:14px 15px;border-radius:14px;background:{{ c.bg }};border:1px solid {{ c.bd }};transition:.3s">
+          <span style="flex-shrink:0;width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:{{ c.iconBg }}">
+            <sc-if value="{{ c.done }}" hint-placeholder-val="{{ true }}">
+              <svg style="animation:tick .4s ease both" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0b0612" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+            </sc-if>
+            <sc-if value="{{ c.pending }}" hint-placeholder-val="{{ false }}">
+              <span style="width:13px;height:13px;border-radius:50%;border:2px solid #5a4a7c;border-top-color:#b78bff;animation:spin .7s linear infinite"></span>
+            </sc-if>
+          </span>
+          <div style="min-width:0">
+            <div style="font-size:13.5px;font-weight:600;color:{{ c.fg }}">{{ c.label }}</div>
+            <div style="font-family:'JetBrains Mono';font-size:10.5px;color:#8a7ab0;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.detail }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- the proof: preimage -->
+    <div style="padding:20px 22px;border-radius:16px;background:linear-gradient(150deg,#1c1136,#140a28);border:1px solid #3a2a5c;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px">
+        <span style="font-size:11px;letter-spacing:.16em;color:#b78bff;font-weight:700">THE SMOKING GUN · PAYMENT PREIMAGE</span>
+        <span style="font-size:10.5px;font-family:'JetBrains Mono';color:#8a7ab0">SHA-256 → payment_hash ✓</span>
+      </div>
+      <div style="display:flex;gap:2px;height:46px;align-items:flex-end;margin-bottom:11px">
+        <sc-for list="{{ bars }}" as="b" hint-placeholder-count="48">
+          <span style="flex:1;border-radius:2px;background:linear-gradient(#c79bff,#7c3aed);height:{{ b.h }};transform-origin:bottom;animation:barGrow .5s ease {{ b.d }} both"></span>
+        </sc-for>
+      </div>
+      <div style="font-family:'JetBrains Mono';font-size:11.5px;color:#cbbce8;word-break:break-all;letter-spacing:.03em">d4e1b7a2f8c3061954e2b8d7c1a6f0935e2c8b1d7a4f0e63b9c5a2d8f1e0b6c3</div>
+    </div>
+
+    <!-- key facts -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
+      <sc-for list="{{ facts }}" as="f" hint-placeholder-count="4">
+        <div style="padding:15px 17px;border-radius:14px;background:#150c28;border:1px solid #2a1c47">
+          <div style="font-size:10.5px;letter-spacing:.1em;color:#8a7ab0;font-weight:600;text-transform:uppercase">{{ f.k }}</div>
+          <div style="margin-top:6px;font-family:'JetBrains Mono';font-size:13px;color:#f3eefe;word-break:break-all">{{ f.v }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:flex;gap:11px;margin-top:16px">
+      <button onClick="{{ replay }}" style="flex:1;background:linear-gradient(140deg,#c79bff,#7c3aed);color:#0b0612;border:none;border-radius:13px;padding:14px;font-family:'Sora';font-weight:700;font-size:14px;cursor:pointer">Replay verification</button>
+      <button style="background:none;color:#cbbce8;border:1px solid #3a2a5c;border-radius:13px;padding:14px 20px;font-family:'Sora';font-weight:600;font-size:14px;cursor:pointer">Raw TLV</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:680,&quot;height&quot;:1080}}">
+class Component extends DCLogic {
+  state={tick:0};
+  componentDidMount(){ this.run(); }
+  componentWillUnmount(){ clearInterval(this._t); }
+  run(){ clearInterval(this._t); this.setState({tick:0});
+    this._t=setInterval(()=>this.setState(s=> s.tick>=4 ? (clearInterval(this._t),null):{tick:s.tick+1}), 650); }
+  replay=()=>this.run();
+  renderVals(){
+    const defs=[
+      {label:'Preimage proves payment', detail:'SHA-256(preimage)=hash'},
+      {label:'Signed by payee', detail:'schnorr · offer_node_id'},
+      {label:'Payer authenticated', detail:'payer_key signature'},
+      {label:'Disclosure intact', detail:'merkle root · 7 leaves'}
+    ];
+    const checks=defs.map((d,i)=>{const done=i<this.state.tick;return{...d,done,pending:!done,
+      bg:done?'#1a1030':'#130b24', bd:done?'#4a2f7c':'#241640',
+      iconBg:done?'#b78bff':'#241640', fg:done?'#f3eefe':'#9a8ac0'};});
+    const hex='d4e1b7a2f8c3061954e2b8d7c1a6f0935e2c8b1d7a4f0e63b9c5a2d8f1e0b6c3';
+    const bars=[]; for(let i=0;i<48;i++){const n=parseInt(hex[i%hex.length],16);bars.push({h:(30+n/15*70).toFixed(0)+'%',d:(i*0.014).toFixed(3)+'s'});}
+    const facts=[
+      {k:'Payee node', v:'023f4a2b…d4e5f6a7'},
+      {k:'Payment hash', v:'8a1f0c4d…9e1b5a2f'},
+      {k:'Payer key', v:'0276c4a9…3f5e7b9c'},
+      {k:'Settled', v:'2026-06-14 09:32 UTC'}
+    ];
+    return {checks,bars,facts,replay:this.replay};
+  }
+}
+</script>
+</body>
+</html>

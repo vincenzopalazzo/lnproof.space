@@ -1,0 +1,148 @@
+/*
+ * lnproof.space global styles
+ * Tokens extracted verbatim from design/BOLT12 Explorer.dc.html
+ * Minimal by design — no CSS framework, privacy-friendly (self-hostable).
+ */
+
+/*
+ * Self-hosted fonts (latin subset, variable woff2). Served from static/fonts/
+ * so the page makes ZERO third-party requests — no IP leak to Google's CDN,
+ * consistent with the privacy goal. Files vendored via scripts/, see README.
+ */
+@font-face {
+	font-family: 'Space Grotesk';
+	font-style: normal;
+	font-weight: 300 700;
+	font-display: swap;
+	src: url('/fonts/space-grotesk.woff2') format('woff2');
+}
+@font-face {
+	font-family: 'JetBrains Mono';
+	font-style: normal;
+	font-weight: 100 800;
+	font-display: swap;
+	src: url('/fonts/jetbrains-mono.woff2') format('woff2');
+}
+
+:root {
+	--bg: #0a0b0f;
+	--bg2: #0d0f15;
+	--panel: #13151d;
+	--panel2: #191c26;
+	--elev: #1f232e;
+	--border: #262a36;
+	--border2: #333a49;
+	--text: #e7e9f0;
+	--text2: #9aa0b0;
+	--muted: #5f6573;
+	--violet: #9d6bff;
+	--violet2: #7c4dff;
+	--violet-soft: rgba(157, 107, 255, 0.13);
+	--violet-line: rgba(157, 107, 255, 0.34);
+	--green: #2dd4a7;
+	--green-soft: rgba(45, 212, 167, 0.12);
+	--green-line: rgba(45, 212, 167, 0.4);
+	--amber: #f7a83b;
+	--amber-soft: rgba(247, 168, 59, 0.12);
+	--red: #ff5c8a;
+	--red-soft: rgba(255, 92, 138, 0.12);
+	--shadow: 0 18px 50px -20px rgba(0, 0, 0, 0.7);
+}
+
+:global([data-theme='light']) {
+	--bg: #f5f6f9;
+	--bg2: #eceef3;
+	--panel: #ffffff;
+	--panel2: #f4f6fa;
+	--elev: #ffffff;
+	--border: #e4e7ee;
+	--border2: #d3d8e2;
+	--text: #161922;
+	--text2: #5a6173;
+	--muted: #8a91a1;
+	--violet: #6d3df0;
+	--violet2: #7c4dff;
+	--violet-soft: rgba(124, 77, 255, 0.1);
+	--violet-line: rgba(124, 77, 255, 0.28);
+	--green: #0f9e74;
+	--green-soft: rgba(15, 158, 116, 0.1);
+	--green-line: rgba(15, 158, 116, 0.32);
+	--amber: #cf7a16;
+	--amber-soft: rgba(207, 122, 22, 0.12);
+	--red: #e23a6b;
+	--red-soft: rgba(226, 58, 107, 0.1);
+	--shadow: 0 16px 40px -22px rgba(20, 30, 60, 0.32);
+}
+
+:global(*:focus-visible) {
+	outline: 2px solid var(--violet);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+:global(::selection) {
+	background: var(--violet-soft);
+	color: var(--text);
+}
+
+:global(::-webkit-scrollbar) {
+	width: 11px;
+	height: 11px;
+}
+
+:global(::-webkit-scrollbar-thumb) {
+	background: var(--border2);
+	border-radius: 8px;
+	border: 3px solid var(--bg);
+}
+
+:global(input::placeholder) {
+	color: var(--muted);
+}
+
+/* Animations from the design */
+:global(@keyframes popIn) {
+	0% {
+		transform: scale(0.4);
+	}
+	60% {
+		transform: scale(1.15);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+
+:global(@keyframes spin) {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+:global(@keyframes fadeUp) {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+:global(@keyframes glowPulse) {
+	0%,
+	100% {
+		box-shadow: 0 0 0 0 var(--green-soft);
+	}
+	50% {
+		box-shadow: 0 0 30px 2px var(--green-soft);
+	}
+}
+
+/* Proof view: collapse the ledger / disclosure columns on narrow screens. */
+@media (max-width: 760px) {
+	:global(.proof-grid) {
+		grid-template-columns: 1fr !important;
+	}
+}

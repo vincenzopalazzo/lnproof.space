@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box}body{margin:0;background:#15171d}a{text-decoration:none}</style>
+</helmet>
+<div style="min-height:100vh;background:#15171d;color:#e7e9f0;font-family:'Space Grotesk',sans-serif;padding:54px 28px 80px">
+  <div style="max-width:1080px;margin:0 auto">
+    <div style="font-family:'JetBrains Mono';font-size:12px;color:#8a90a2;letter-spacing:.08em;margin-bottom:14px">BOLT12 PAYER-PROOF EXPLORER · DESIGN DIRECTIONS</div>
+    <h1 style="margin:0;font-size:34px;font-weight:600;letter-spacing:-.02em;max-width:20ch">Three directions for the payer-proof receipt</h1>
+    <p style="margin:14px 0 0;font-size:15.5px;color:#9aa0b0;max-width:60ch;line-height:1.55">Same verified donation, three visual languages. Open any one — they all decode the proof, animate the crypto checks, and surface the preimage as the smoking gun.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px;margin-top:38px">
+
+      <a href="BOLT12 Explorer.dc.html" style="display:flex;flex-direction:column;border-radius:14px;overflow:hidden;border:1px solid #2a2e3a;background:#1b1e26">
+        <div style="height:150px;background:#0a0b0f;border-bottom:1px solid #2a2e3a;padding:16px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:#2dd4a7"></span><span style="font-family:'JetBrains Mono';font-size:9px;color:#5f6573">mainnet</span></div>
+          <div style="border-left:3px solid #2dd4a7;background:#13151d;border:1px solid #262a36;border-left:3px solid #2dd4a7;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#2dd4a7;letter-spacing:.08em;font-weight:700">PAYMENT VERIFIED</div>
+            <div style="font-size:22px;font-weight:700;margin-top:3px">50,000 <span style="font-size:11px;color:#9aa0b0">sats</span></div>
+          </div>
+          <div style="display:flex;gap:5px"><span style="flex:1;height:18px;border-radius:4px;background:#13151d;border:1px solid #262a36"></span><span style="flex:1;height:18px;border-radius:4px;background:#13151d;border:1px solid #262a36"></span></div>
+        </div>
+        <div style="padding:18px">
+          <div style="display:flex;align-items:center;gap:9px"><span style="font-family:'JetBrains Mono';font-size:11px;color:#9d6bff;font-weight:700">A</span><span style="font-size:16px;font-weight:600">Block-explorer</span><span style="margin-left:auto;font-size:10px;color:#5f6573;border:1px solid #2a2e3a;border-radius:5px;padding:3px 7px">FULL APP</span></div>
+          <p style="margin:9px 0 0;font-size:13px;color:#9aa0b0;line-height:1.5">Dark, dense, technical — like mempool.space. Landing, search, full verification ledger, TLV inspector, offer + invoice screens.</p>
+          <div style="margin-top:14px;font-size:13px;color:#9d6bff;font-weight:600">Open direction A →</div>
+        </div>
+      </a>
+
+      <a href="Proof — B Receipt.dc.html" style="display:flex;flex-direction:column;border-radius:14px;overflow:hidden;border:1px solid #2a2e3a;background:#1b1e26">
+        <div style="height:150px;background:#e8e4da;border-bottom:1px solid #2a2e3a;padding:18px;display:flex;align-items:center;justify-content:center">
+          <div style="width:170px;background:#f7f4ec;border:1px solid #d6d0c0;padding:14px 16px;text-align:center;position:relative">
+            <div style="font-family:'JetBrains Mono';font-size:8px;letter-spacing:.12em;color:#6b6657;border-bottom:1.5px solid #1a1a18;padding-bottom:6px">PROOF OF PAYMENT</div>
+            <div style="font-size:22px;font-weight:700;color:#1a1a18;margin-top:8px;font-family:'Space Grotesk'">50,000</div>
+            <div style="position:absolute;top:10px;right:6px;transform:rotate(-9deg);border:1.5px solid #1c7a4a;color:#1c7a4a;border-radius:4px;padding:2px 5px;font-size:7px;font-weight:700;letter-spacing:.08em">VERIFIED</div>
+          </div>
+        </div>
+        <div style="padding:18px">
+          <div style="display:flex;align-items:center;gap:9px"><span style="font-family:'JetBrains Mono';font-size:11px;color:#9d6bff;font-weight:700">B</span><span style="font-size:16px;font-weight:600">Verifiable receipt</span><span style="margin-left:auto;font-size:10px;color:#5f6573;border:1px solid #2a2e3a;border-radius:5px;padding:3px 7px">ARTIFACT</span></div>
+          <p style="margin:9px 0 0;font-size:13px;color:#9aa0b0;line-height:1.5">Paper-receipt metaphor — perforated edges, a wax-stamp "VERIFIED", line items, and the preimage printed as a barcode.</p>
+          <div style="margin-top:14px;font-size:13px;color:#9d6bff;font-weight:600">Open direction B →</div>
+        </div>
+      </a>
+
+      <a href="Proof — C Brand.dc.html" style="display:flex;flex-direction:column;border-radius:14px;overflow:hidden;border:1px solid #2a2e3a;background:#1b1e26">
+        <div style="height:150px;background:radial-gradient(300px 160px at 70% 0%,#2a0f55,transparent),#0b0612;border-bottom:1px solid #2a2e3a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px">
+          <div style="width:52px;height:52px;border-radius:50%;border:4px solid #2a1c47;border-top-color:#c79bff;border-right-color:#c79bff;display:grid;place-items:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c79bff" stroke-width="2.6" stroke-linecap="round"><path d="m5 13 4 4L19 7"/></svg></div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:.18em;color:#b78bff">PAYMENT VERIFIED</div>
+          <div style="font-size:22px;font-weight:800;color:#f3eefe;letter-spacing:-.02em">50,000 <span style="font-size:11px;font-weight:500;color:#a78bce">sats</span></div>
+        </div>
+        <div style="padding:18px">
+          <div style="display:flex;align-items:center;gap:9px"><span style="font-family:'JetBrains Mono';font-size:11px;color:#9d6bff;font-weight:700">C</span><span style="font-size:16px;font-weight:600">Lightning brand</span><span style="margin-left:auto;font-size:10px;color:#5f6573;border:1px solid #2a2e3a;border-radius:5px;padding:3px 7px">HERO</span></div>
+          <p style="margin:9px 0 0;font-size:13px;color:#9aa0b0;line-height:1.5">Bold violet fintech — big confident type, an animated progress ring, gradient preimage waveform, and glassy fact chips.</p>
+          <div style="margin-top:14px;font-size:13px;color:#9d6bff;font-weight:600">Open direction C →</div>
+        </div>
+      </a>
+
+    </div>
+    <p style="margin:34px 0 0;font-size:13px;color:#5f6573">Tell me which direction to carry across the whole explorer (landing, search, offer + invoice, TLV inspector), or mix elements between them.</p>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1080,&quot;height&quot;:720}}"></script>
+</body>
+</html>

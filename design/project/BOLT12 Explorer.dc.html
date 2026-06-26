@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0b0f; --bg2:#0d0f15; --panel:#13151d; --panel2:#191c26; --elev:#1f232e;
+    --border:#262a36; --border2:#333a49; --text:#e7e9f0; --text2:#9aa0b0; --muted:#5f6573;
+    --violet:#9d6bff; --violet2:#7c4dff; --violet-soft:rgba(157,107,255,.13); --violet-line:rgba(157,107,255,.34);
+    --green:#2dd4a7; --green-soft:rgba(45,212,167,.12); --green-line:rgba(45,212,167,.4);
+    --amber:#f7a83b; --amber-soft:rgba(247,168,59,.12);
+    --red:#ff5c8a; --red-soft:rgba(255,92,138,.12);
+    --shadow:0 18px 50px -20px rgba(0,0,0,.7);
+  }
+  [data-theme="light"]{
+    --bg:#f5f6f9; --bg2:#eceef3; --panel:#ffffff; --panel2:#f4f6fa; --elev:#ffffff;
+    --border:#e4e7ee; --border2:#d3d8e2; --text:#161922; --text2:#5a6173; --muted:#8a91a1;
+    --violet:#6d3df0; --violet2:#7c4dff; --violet-soft:rgba(124,77,255,.1); --violet-line:rgba(124,77,255,.28);
+    --green:#0f9e74; --green-soft:rgba(15,158,116,.1); --green-line:rgba(15,158,116,.32);
+    --amber:#cf7a16; --amber-soft:rgba(207,122,22,.12);
+    --red:#e23a6b; --red-soft:rgba(226,58,107,.1);
+    --shadow:0 16px 40px -22px rgba(20,30,60,.32);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);-webkit-font-smoothing:antialiased}
+  ::selection{background:var(--violet-soft);color:var(--text)}
+  ::-webkit-scrollbar{width:11px;height:11px}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:8px;border:3px solid var(--bg)}
+  input::placeholder{color:var(--muted)}
+  @keyframes popIn{0%{transform:scale(.4)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @keyframes glowPulse{0%,100%{box-shadow:0 0 0 0 var(--green-soft)}50%{box-shadow:0 0 30px 2px var(--green-soft)}}
+  @keyframes boltFlicker{0%,100%{opacity:.92}48%{opacity:.55}52%{opacity:1}}
+  @keyframes dash{to{stroke-dashoffset:0}}
+  @keyframes shimmer{to{background-position:200% 0}}
+</style>
+</helmet>
+<div data-theme="{{ theme }}" style="min-height:100vh;background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-ui,sans-serif">
+
+  <header style="position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:18px;padding:13px 22px;background:var(--bg2);border-bottom:1px solid var(--border);backdrop-filter:blur(8px)">
+    <button onClick="{{ goHome }}" style="display:flex;align-items:center;gap:11px;background:none;border:none;cursor:pointer;padding:0;color:var(--text)">
+      <span style="display:grid;place-items:center;width:30px;height:30px;border-radius:6px;background:var(--violet)">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>
+      </span>
+      <span style="font-weight:700;font-size:18px;letter-spacing:-.02em">lnproof<span style="color:var(--violet)">.space</span></span>
+    </button>
+
+    <sc-if value="{{ notLanding }}" hint-placeholder-val="{{ true }}">
+      <form onSubmit="{{ onSubmit }}" style="flex:1;max-width:560px;display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:6px 6px 6px 13px">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input value="{{ query }}" onInput="{{ onQuery }}" placeholder="Paste a payer proof, offer or invoice…" style="flex:1;background:none;border:none;outline:none;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12.5px"/>
+        <button type="submit" style="background:var(--violet);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-weight:600;font-size:12.5px;cursor:pointer;font-family:'Space Grotesk'">Decode</button>
+      </form>
+    </sc-if>
+
+    <div style="flex:1"></div>
+
+    <div style="display:flex;align-items:center;gap:6px;padding:6px 11px;border:1px solid var(--border);border-radius:9px;background:var(--panel);font-size:12px;color:var(--text2);font-weight:500">
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)"></span>mainnet
+    </div>
+    <button onClick="{{ toggleTheme }}" title="Toggle theme" style="display:grid;place-items:center;width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:var(--panel);cursor:pointer;color:var(--text2)">
+      <sc-if value="{{ isDark }}" hint-placeholder-val="{{ true }}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg>
+      </sc-if>
+      <sc-if value="{{ isLight }}" hint-placeholder-val="{{ false }}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </sc-if>
+    </button>
+  </header>
+
+  <!-- ============ LANDING ============ -->
+  <sc-if value="{{ isLanding }}" hint-placeholder-val="{{ true }}">
+  <main style="max-width:980px;margin:0 auto;padding:72px 24px 90px">
+    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:20px">
+      <div style="display:inline-flex;align-items:center;gap:8px;padding:5px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--panel);font-family:'JetBrains Mono';font-size:12px;color:var(--text2);font-weight:500">
+        <span style="color:var(--violet);font-weight:700">BOLT12</span> payer proof · proposal #1295
+      </div>
+      <h1 style="margin:0;font-size:clamp(29px,4.4vw,44px);line-height:1.06;letter-spacing:-.03em;font-weight:600;max-width:16ch">A block explorer for payments that never touch the chain.</h1>
+      <p style="margin:0;max-width:54ch;font-size:17px;line-height:1.55;color:var(--text2)">Lightning has no public ledger to crawl. A <strong style="color:var(--text);font-weight:600">payer proof</strong> is a single string that decodes the payment <em style="font-style:normal;color:var(--violet)">and</em> cryptographically proves who paid whom — paste one to inspect it.</p>
+
+      <form onSubmit="{{ onSubmit }}" style="width:100%;max-width:680px;margin-top:14px;display:flex;align-items:center;gap:9px;background:var(--panel);border:1px solid var(--border2);border-radius:9px;padding:9px 9px 9px 16px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input value="{{ query }}" onInput="{{ onQuery }}" placeholder="lnp1… / lno1… / lni1…" style="flex:1;background:none;border:none;outline:none;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:14px;min-width:0"/>
+        <button type="submit" style="background:var(--violet);color:#fff;border:none;border-radius:11px;padding:12px 22px;font-weight:600;font-size:14.5px;cursor:pointer;font-family:'Space Grotesk';white-space:nowrap">Decode</button>
+      </form>
+      <button onClick="{{ goProof }}" style="background:none;border:none;color:var(--text2);font-size:13px;cursor:pointer;font-family:'Space Grotesk'">or try a <span style="color:var(--violet);font-weight:600;text-decoration:underline;text-underline-offset:3px">sample payer proof →</span></button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:54px">
+      <button onClick="{{ goProof }}" style="text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:11px;padding:20px;border-radius:9px;border:1px solid var(--border);background:var(--panel);color:var(--text);transition:.16s" style-hover="border-color:var(--violet-line);transform:translateY(-3px)">
+        <span style="display:inline-flex;align-self:flex-start;align-items:center;gap:6px;padding:4px 9px;border-radius:7px;background:var(--green-soft);color:var(--green);font-size:11px;font-weight:700;letter-spacing:.04em">PAYER PROOF</span>
+        <span style="font-weight:600;font-size:15px">A verified donation receipt</span>
+        <span style="font-size:13px;color:var(--text2);line-height:1.5">50,000 sats to <span style="font-family:'JetBrains Mono';font-size:12px">vincenzopalazzo</span> — proof of payment + identity.</span>
+        <span style="font-family:'JetBrains Mono';font-size:11px;color:var(--muted);margin-top:2px">lnp1qg2s7…f9w0</span>
+      </button>
+      <button onClick="{{ goOffer }}" style="text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:11px;padding:20px;border-radius:9px;border:1px solid var(--border);background:var(--panel);color:var(--text);transition:.16s" style-hover="border-color:var(--violet-line);transform:translateY(-3px)">
+        <span style="display:inline-flex;align-self:flex-start;align-items:center;gap:6px;padding:4px 9px;border-radius:7px;background:var(--violet-soft);color:var(--violet);font-size:11px;font-weight:700;letter-spacing:.04em">OFFER</span>
+        <span style="font-weight:600;font-size:15px">A reusable BOLT12 offer</span>
+        <span style="font-size:13px;color:var(--text2);line-height:1.5">Decode an <span style="font-family:'JetBrains Mono';font-size:12px">lno1</span> string into its fields and node.</span>
+        <span style="font-family:'JetBrains Mono';font-size:11px;color:var(--muted);margin-top:2px">lno1pg25…7ymlv</span>
+      </button>
+      <button onClick="{{ goInvoice }}" style="text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:11px;padding:20px;border-radius:9px;border:1px solid var(--border);background:var(--panel);color:var(--text);transition:.16s" style-hover="border-color:var(--violet-line);transform:translateY(-3px)">
+        <span style="display:inline-flex;align-self:flex-start;align-items:center;gap:6px;padding:4px 9px;border-radius:7px;background:var(--amber-soft);color:var(--amber);font-size:11px;font-weight:700;letter-spacing:.04em">INVOICE</span>
+        <span style="font-weight:600;font-size:15px">A signed BOLT12 invoice</span>
+        <span style="font-size:13px;color:var(--text2);line-height:1.5">Decode an <span style="font-family:'JetBrains Mono';font-size:12px">lni1</span> invoice with amount and payment hash.</span>
+        <span style="font-family:'JetBrains Mono';font-size:11px;color:var(--muted);margin-top:2px">lni1qqs8…3kp7x</span>
+      </button>
+    </div>
+
+    <div style="margin-top:46px;display:flex;flex-wrap:wrap;justify-content:center;gap:28px;padding-top:32px;border-top:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--text2)"><span style="font-family:'JetBrains Mono';color:var(--violet);font-weight:700">1</span> Paste the proof string</div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--text2)"><span style="font-family:'JetBrains Mono';color:var(--violet);font-weight:700">2</span> Decode every TLV field</div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--text2)"><span style="font-family:'JetBrains Mono';color:var(--violet);font-weight:700">3</span> Watch the crypto checks pass</div>
+    </div>
+  </main>
+  </sc-if>
+
+  <!-- ============ PAYER PROOF DETAIL ============ -->
+  <sc-if value="{{ isProof }}" hint-placeholder-val="{{ false }}">
+  <main style="max-width:1080px;margin:0 auto;padding:26px 24px 90px">
+    <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text2);margin-bottom:16px">
+      <button onClick="{{ goHome }}" style="background:none;border:none;color:var(--text2);cursor:pointer;font-family:'Space Grotesk';font-size:13px;padding:0">Explorer</button>
+      <span style="color:var(--muted)">/</span>
+      <span style="color:var(--green);font-weight:600">Payer proof</span>
+    </div>
+
+    <!-- proof string row -->
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 16px;border:1px solid var(--border);border-radius:12px;background:var(--panel);margin-bottom:18px">
+      <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:7px;background:var(--green-soft);color:var(--green);font-size:11px;font-weight:700;letter-spacing:.04em;white-space:nowrap">PAYER PROOF</span>
+      <code style="flex:1;min-width:180px;font-family:'JetBrains Mono';font-size:12.5px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ proofStr }}</code>
+      <button onClick="{{ copyProof }}" style="display:flex;align-items:center;gap:6px;background:var(--elev);border:1px solid var(--border);border-radius:8px;padding:6px 11px;font-size:12px;color:var(--text);cursor:pointer;font-family:'Space Grotesk'">{{ copyProofLabel }}</button>
+    </div>
+
+    <!-- HERO verified banner -->
+    <div style="position:relative;overflow:hidden;display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:center;padding:26px 28px;border-radius:10px;border:1px solid var(--border);border-left:3px solid var(--green);background:var(--panel)">
+      <div style="position:relative;width:96px;height:96px;display:grid;place-items:center">
+        <div style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--green) {{ verifyPct }}, var(--border2) 0)"></div>
+        <div style="position:absolute;inset:6px;border-radius:50%;background:var(--panel)"></div>
+        <sc-if value="{{ allVerified }}" hint-placeholder-val="{{ false }}">
+          <svg style="position:relative;animation:popIn .5s cubic-bezier(.2,1.3,.5,1)" width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+        </sc-if>
+        <sc-if value="{{ verifying }}" hint-placeholder-val="{{ true }}">
+          <span style="position:relative;font-family:'JetBrains Mono';font-size:20px;font-weight:700;color:var(--green)">{{ verifyStep }}/4</span>
+        </sc-if>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--green)">{{ statusLabel }}</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+          <span style="font-size:42px;font-weight:700;letter-spacing:-.03em;line-height:1">{{ amountSats }}</span>
+          <span style="font-size:18px;color:var(--text2);font-weight:500">sats</span>
+          <span style="font-size:14px;color:var(--muted);font-family:'JetBrains Mono'">≈ {{ amountBtc }} BTC</span>
+        </div>
+        <div style="font-size:15px;color:var(--text2)">paid to <span style="color:var(--text);font-weight:600">{{ issuer }}</span> · <span>{{ description }}</span></div>
+        <div style="margin-top:6px;display:inline-flex;align-self:flex-start;align-items:center;gap:8px;padding:7px 13px;border-radius:9px;background:var(--violet-soft);border:1px solid var(--violet-line);font-size:13.5px;color:var(--text)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span style="font-style:italic;color:var(--text2)">"{{ payerNote }}"</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1.25fr 1fr;gap:18px;margin-top:18px;align-items:start" class="proof-grid">
+
+      <!-- verification ledger -->
+      <section style="border:1px solid var(--border);border-radius:10px;background:var(--panel);overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border)">
+          <h2 style="margin:0;font-size:14.5px;font-weight:600">Verification ledger</h2>
+          <span style="font-size:11.5px;color:var(--muted);font-family:'JetBrains Mono'">4 checks</span>
+        </div>
+        <div style="padding:6px 18px 14px">
+          <sc-for list="{{ checks }}" as="c" hint-placeholder-count="4">
+            <div style="display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--border)">
+              <div style="flex-shrink:0;width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:{{ c.bg }};border:1px solid {{ c.bd }}">
+                <sc-if value="{{ c.done }}" hint-placeholder-val="{{ false }}">
+                  <svg style="animation:popIn .45s cubic-bezier(.2,1.3,.5,1)" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                </sc-if>
+                <sc-if value="{{ c.active }}" hint-placeholder-val="{{ true }}">
+                  <span style="width:15px;height:15px;border-radius:50%;border:2px solid var(--border2);border-top-color:var(--violet);animation:spin .7s linear infinite"></span>
+                </sc-if>
+                <sc-if value="{{ c.waiting }}" hint-placeholder-val="{{ false }}">
+                  <span style="width:7px;height:7px;border-radius:50%;background:var(--muted)"></span>
+                </sc-if>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14px;font-weight:600;color:{{ c.titleColor }}">{{ c.label }}</div>
+                <div style="font-family:'JetBrains Mono';font-size:11.5px;color:var(--muted);margin-top:3px;word-break:break-all">{{ c.detail }}</div>
+              </div>
+              <sc-if value="{{ c.done }}" hint-placeholder-val="{{ false }}">
+                <span style="flex-shrink:0;font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);padding:3px 8px;border-radius:6px;letter-spacing:.04em">OK</span>
+              </sc-if>
+            </div>
+          </sc-for>
+          <button onClick="{{ replay }}" style="margin-top:13px;display:flex;align-items:center;gap:7px;background:var(--elev);border:1px solid var(--border);border-radius:9px;padding:8px 13px;font-size:12.5px;color:var(--text2);cursor:pointer;font-family:'Space Grotesk'">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Replay verification
+          </button>
+        </div>
+      </section>
+
+      <!-- selective disclosure -->
+      <section style="border:1px solid var(--border);border-radius:10px;background:var(--panel);overflow:hidden;align-self:start">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border)">
+          <h2 style="margin:0;font-size:14.5px;font-weight:600">Selective disclosure</h2>
+          <span style="font-size:11.5px;color:var(--muted);font-family:'JetBrains Mono'">{{ revealedCount }}/{{ totalFields }} shown</span>
+        </div>
+        <div style="padding:16px 18px">
+          <p style="margin:0 0 14px;font-size:12.5px;color:var(--text2);line-height:1.5">The payer chose which invoice fields to reveal. Hidden fields stay committed in the Merkle root, so the proof still verifies.</p>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <sc-for list="{{ disclosure }}" as="d" hint-placeholder-count="6">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 11px;border-radius:9px;background:{{ d.bg }};border:1px solid {{ d.bd }}">
+                <span style="font-family:'JetBrains Mono';font-size:12px;color:{{ d.fg }}">{{ d.name }}</span>
+                <sc-if value="{{ d.revealed }}" hint-placeholder-val="{{ true }}">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                </sc-if>
+                <sc-if value="{{ d.hidden }}" hint-placeholder-val="{{ false }}">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><path d="M9.9 4.2A9 9 0 0 1 22 12s-1 2-3 3.7M6 6.3C3.5 7.9 2 12 2 12s3.5 7 10 7a9 9 0 0 0 3.7-.8"/><path d="m2 2 20 20"/></svg>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:15px;padding-top:14px;border-top:1px solid var(--border)">
+            <div style="font-size:11px;color:var(--muted);letter-spacing:.06em;font-weight:600;margin-bottom:8px">MERKLE ROOT</div>
+            <div style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono';font-size:11.5px;color:var(--text2);word-break:break-all">{{ merkleShort }}</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- decoded fields -->
+    <section style="margin-top:18px;border:1px solid var(--border);border-radius:10px;background:var(--panel);overflow:hidden">
+      <div style="padding:16px 18px;border-bottom:1px solid var(--border)"><h2 style="margin:0;font-size:14.5px;font-weight:600">Decoded fields</h2></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr))">
+        <sc-for list="{{ fields }}" as="f" hint-placeholder-count="8">
+          <div style="padding:15px 18px;border-bottom:1px solid var(--border);border-right:1px solid var(--border)">
+            <div style="font-size:11px;color:var(--muted);letter-spacing:.05em;font-weight:600;text-transform:uppercase;margin-bottom:7px">{{ f.label }}</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-family:{{ f.font }};font-size:{{ f.size }};color:{{ f.color }};font-weight:{{ f.weight }};word-break:break-all">{{ f.shown }}</span>
+              <sc-if value="{{ f.copyable }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ f.onCopy }}" title="Copy" style="flex-shrink:0;display:grid;place-items:center;width:24px;height:24px;border-radius:6px;border:1px solid var(--border);background:var(--elev);cursor:pointer;color:{{ f.copyColor }}">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                </button>
+              </sc-if>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <!-- raw TLV inspector -->
+    <section style="margin-top:18px;border:1px solid var(--border);border-radius:10px;background:var(--panel);overflow:hidden">
+      <button onClick="{{ toggleTlv }}" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:none;border:none;cursor:pointer;color:var(--text);font-family:'Space Grotesk'">
+        <span style="display:flex;align-items:center;gap:10px;font-size:14.5px;font-weight:600"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2"><path d="m18 16 4-4-4-4M6 8l-4 4 4 4M14.5 4l-5 16"/></svg>Raw TLV inspector</span>
+        <span style="display:flex;align-items:center;gap:9px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono'">{{ tlvCount }} records<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform:rotate({{ tlvArrow }});transition:.2s"><path d="m6 9 6 6 6-6"/></svg></span>
+      </button>
+      <sc-if value="{{ showTlv }}" hint-placeholder-val="{{ false }}">
+        <div style="border-top:1px solid var(--border);overflow-x:auto">
+          <div style="display:grid;grid-template-columns:64px 1fr 64px 2fr;gap:0;min-width:560px;font-family:'JetBrains Mono';font-size:12px">
+            <div style="padding:9px 14px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border)">type</div>
+            <div style="padding:9px 14px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border)">name</div>
+            <div style="padding:9px 14px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border)">len</div>
+            <div style="padding:9px 14px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border)">value</div>
+            <sc-for list="{{ tlv }}" as="t" hint-placeholder-count="8">
+              <div style="padding:10px 14px;color:var(--violet);font-weight:700;border-bottom:1px solid var(--border)">{{ t.type }}</div>
+              <div style="padding:10px 14px;color:var(--text);border-bottom:1px solid var(--border)">{{ t.name }}</div>
+              <div style="padding:10px 14px;color:var(--text2);border-bottom:1px solid var(--border)">{{ t.len }}</div>
+              <div style="padding:10px 14px;color:var(--text2);border-bottom:1px solid var(--border);word-break:break-all">{{ t.value }}</div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+    </section>
+  </main>
+  </sc-if>
+
+  <!-- ============ OFFER DETAIL ============ -->
+  <sc-if value="{{ isOffer }}" hint-placeholder-val="{{ false }}">
+  <main style="max-width:880px;margin:0 auto;padding:26px 24px 90px">
+    <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text2);margin-bottom:16px">
+      <button onClick="{{ goHome }}" style="background:none;border:none;color:var(--text2);cursor:pointer;font-family:'Space Grotesk';font-size:13px;padding:0">Explorer</button>
+      <span style="color:var(--muted)">/</span><span style="color:var(--violet);font-weight:600">Offer</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 16px;border:1px solid var(--border);border-radius:12px;background:var(--panel);margin-bottom:18px">
+      <span style="padding:4px 10px;border-radius:7px;background:var(--violet-soft);color:var(--violet);font-size:11px;font-weight:700;letter-spacing:.04em">OFFER</span>
+      <code style="flex:1;min-width:180px;font-family:'JetBrains Mono';font-size:12.5px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ offerStr }}</code>
+    </div>
+    <div style="padding:24px 26px;border-radius:10px;border:1px solid var(--border);border-left:3px solid var(--violet);background:var(--panel);margin-bottom:18px">
+      <div style="font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--violet)">REUSABLE OFFER · CAN BE PAID MANY TIMES</div>
+      <div style="margin-top:10px;font-size:26px;font-weight:700;letter-spacing:-.02em">{{ offerDesc }}</div>
+      <div style="margin-top:6px;font-size:15px;color:var(--text2)">by <span style="color:var(--text);font-weight:600">{{ issuer }}</span> · amount <span style="color:var(--amber);font-weight:600">{{ offerAmount }}</span></div>
+    </div>
+    <section style="border:1px solid var(--border);border-radius:10px;background:var(--panel);overflow:hidden">
+      <div style="padding:16px 18px;border-bottom:1px solid var(--border)"><h2 style="margin:0;font-size:14.5px;font-weight:600">Decoded fields</h2></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr))">
+        <sc-for list="{{ offerFields }}" as="f" hint-placeholder-count="6">
+          <div style="padding:15px 18px;border-bottom:1px solid var(--border);border-right:1px solid var(--border)">
+            <div style="font-size:11px;color:var(--muted);letter-spacing:.05em;font-weight:600;text-transform:uppercase;margin-bottom:7px">{{ f.label }}</div>
+            <span style="font-family:{{ f.font }};font-size:{{ f.size }};color:{{ f.color }};word-break:break-all">{{ f.shown }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </main>
+  </sc-if>
+
+  <!-- ============ INVOICE DETAIL ============ -->
+  <sc-if value="{{ isInvoice }}" hint-placeholder-val="{{ false }}">
+  <main style="max-width:880px;margin:0 auto;padding:26px 24px 90px">
+    <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text2);margin-bottom:16px">
+      <button onClick="{{ goHome }}" style="background:none;border:none;color:var(--text2);cursor:pointer;font-family:'Space Grotesk';font-size:13px;padding:0">Explorer</button>
+      <span style="color:var(--muted)">/</span><span style="color:var(--amber);font-weight:600">Invoice</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 16px;border:1px solid var(--border);border-radius:12px;background:var(--panel);margin-bottom:18px">
+      <span style="padding:4px 10px;border-radius:7px;background:var(--amber-soft);color:var(--amber);font-size:11px;font-weight:700;letter-spacing:.04em">INVOICE</span>
+      <code style="flex:1;min-width:180px;font-family:'JetBrains Mono';font-size:12.5px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ invoiceStr }}</code>
+    </div>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center;padding:24px 26px;border-radius:10px;border:1px solid var(--border);border-left:3px solid var(--amber);background:var(--panel);margin-bottom:18px">
+      <div style="display:grid;place-items:center;width:64px;height:64px;border-radius:14px;background:var(--amber-soft);border:1px solid rgba(247,168,59,.3)">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--amber)">INVOICE · AWAITING / PAID</div>
+        <div style="margin-top:6px;display:flex;align-items:baseline;gap:9px"><span style="font-size:34px;font-weight:700;letter-spacing:-.03em">{{ amountSats }}</span><span style="font-size:16px;color:var(--text2)">sats</span></div>
+        <div style="margin-top:4px;font-size:14px;color:var(--text2)">{{ description }} · from <span style="color:var(--text);font-weight:600">{{ issuer }}</span></div>
+      </div>
+    </div>
+    <section style="border:1px solid var(--border);border-radius:10px;background:var(--panel);overflow:hidden">
+      <div style="padding:16px 18px;border-bottom:1px solid var(--border)"><h2 style="margin:0;font-size:14.5px;font-weight:600">Decoded fields</h2></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr))">
+        <sc-for list="{{ invoiceFields }}" as="f" hint-placeholder-count="6">
+          <div style="padding:15px 18px;border-bottom:1px solid var(--border);border-right:1px solid var(--border)">
+            <div style="font-size:11px;color:var(--muted);letter-spacing:.05em;font-weight:600;text-transform:uppercase;margin-bottom:7px">{{ f.label }}</div>
+            <span style="font-family:{{ f.font }};font-size:{{ f.size }};color:{{ f.color }};word-break:break-all">{{ f.shown }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </main>
+  </sc-if>
+
+  <footer style="border-top:1px solid var(--border);padding:24px;text-align:center;color:var(--muted);font-size:12.5px">
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap">
+      <span>lnproof.space — a concept BOLT12 payer-proof explorer</span><span style="color:var(--border2)">·</span>
+      <span style="font-family:'JetBrains Mono'">proposal lightning/bolts#1295</span>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:860}}">
+class Component extends DCLogic {
+  state = { screen:'landing', theme:'dark', query:'', verifyStep:0, showTlv:false, copied:'' };
+
+  // ---------- mock data (a coffee-sized OSS donation) ----------
+  D = {
+    proofStr: 'lnp1qg2s7enxv4ezqcnjypnx2um5ypmkjarfdpcxcct5v5srqgz5d4skvmn9wggsxqd7r4f9w0am0k3v8u2lq8j6p4',
+    offerStr: 'lno1pg257enxv4ezqcneype82um50ynhxgrwdajx283qfwdpl28qqmc78ymlvhmxcsywdk5wrjnj36jryg488qwlrnzyjczs',
+    invoiceStr:'lni1qqs8j3kp7xg9w4f2enxv4ezqcneype82um50ynhxgrwdajx283qfwdpl28qqmc78ymlvhmxcsywdk5wrjnj36',
+    amountMsat: 50000000,
+    description: 'Support BOLT12 development',
+    issuer: 'vincenzopalazzo',
+    payeeNode: '023f4a2b9c1d8e7f60a5b4c3d2e1f009182736455463728190a1b2c3d4e5f6a7b8',
+    paymentHash:'8a1f0c4d2e6b9a3f7c5d1e0b8f2a4c6d9e3b7a1f5c8d2e4b6a0f3c7d9e1b5a2f',
+    preimage:   'd4e1b7a2f8c3061954e2b8d7c1a6f0935e2c8b1d7a4f0e63b9c5a2d8f1e0b6c3',
+    payerKey:   '0276c4a98f2e1b3d5c7a9f0e2b4d6c8a0f1e3b5d7c9a2f4e6b8d0c1a3f5e7b9c1d',
+    payerNote:  'Thanks for your work on Core Lightning!',
+    created:    '2026-06-14 09:32:11 UTC',
+    merkle:     '3c9e2a7f1d8b4c6e0a5f3b9d2c7e1a6f4b8d0c5e2a9f7b3d1c6e4a8f0b2d5c7e',
+    payeeSig:   'a3f0...e9c2',
+    payerSig:   '7b1d...4f08'
+  };
+
+  checkDefs = [
+    { label:'Preimage proves payment', detail:'SHA‑256(payment_preimage) = payment_hash' },
+    { label:'Invoice signed by payee', detail:'BIP‑340 schnorr sig valid for offer_node_id' },
+    { label:'Payer authenticated', detail:'payer_key signed the proof TLVs' },
+    { label:'Disclosure intact', detail:'Merkle root matches 7 revealed leaves' }
+  ];
+
+  componentDidMount(){ if(this.state.screen==='proof') this.runVerify(); }
+  componentWillUnmount(){ clearInterval(this._t); }
+
+  runVerify(){
+    clearInterval(this._t);
+    this.setState({ verifyStep:0 });
+    this._t = setInterval(()=>{
+      this.setState(s=>{
+        if(s.verifyStep>=4){ clearInterval(this._t); return null; }
+        return { verifyStep: s.verifyStep+1 };
+      });
+    }, 720);
+  }
+
+  goHome   = ()=> this.setState({ screen:'landing', query:'' });
+  goProof  = ()=>{ this.setState({ screen:'proof', showTlv:false }); this.runVerify(); };
+  goOffer  = ()=> this.setState({ screen:'offer' });
+  goInvoice= ()=> this.setState({ screen:'invoice' });
+  replay   = ()=> this.runVerify();
+  toggleTheme=()=> this.setState(s=>({ theme: s.theme==='dark'?'light':'dark' }));
+  toggleTlv=()=> this.setState(s=>({ showTlv:!s.showTlv }));
+  onQuery  = e=> this.setState({ query:e.target.value });
+  onSubmit = e=>{ e.preventDefault(); const q=(this.state.query||'').trim().toLowerCase();
+    if(q.startsWith('lno')) this.goOffer();
+    else if(q.startsWith('lni')) this.goInvoice();
+    else this.goProof();
+  };
+
+  copy(key,text){ try{ navigator.clipboard.writeText(text); }catch(e){}
+    this.setState({ copied:key }); clearTimeout(this._c); this._c=setTimeout(()=>this.setState({copied:''}),1400);
+  }
+  short(h,a=10,b=8){ return h.length>a+b+2 ? h.slice(0,a)+'…'+h.slice(-b) : h; }
+  fmt(n){ return n.toLocaleString('en-US'); }
+
+  renderVals(){
+    const s=this.state, D=this.D;
+    const sats = Math.round(D.amountMsat/1000);
+    const step = s.verifyStep;
+    const allVerified = step>=4;
+
+    const checks = this.checkDefs.map((c,i)=>{
+      const done = i<step, active=i===step && !allVerified, waiting=i>step;
+      return { ...c, done, active, waiting,
+        bg: done?'var(--green-soft)':'var(--elev)',
+        bd: done?'var(--green-line)':'var(--border)',
+        titleColor: done?'var(--text)':(active?'var(--text)':'var(--text2)') };
+    });
+
+    const disclosure = [
+      { name:'offer_description', revealed:true },
+      { name:'offer_issuer', revealed:true },
+      { name:'invoice_amount', revealed:true },
+      { name:'invoice_payment_hash', revealed:true },
+      { name:'invoice_created_at', revealed:true },
+      { name:'payer_note', revealed:true },
+      { name:'invoice_node_id', revealed:true },
+      { name:'invoice_blindedpath', revealed:false },
+      { name:'payer_metadata', revealed:false }
+    ].map(d=>({ name:d.name, revealed:d.revealed, hidden:!d.revealed,
+      bg:d.revealed?'var(--green-soft)':'var(--panel2)',
+      bd:d.revealed?'var(--green-line)':'var(--border)',
+      fg:d.revealed?'var(--text)':'var(--muted)' }));
+    const revealedCount = disclosure.filter(d=>d.revealed).length;
+
+    const mono='\'JetBrains Mono\',monospace', sans='\'Space Grotesk\',sans-serif';
+    const mk=(key,label,full,opt={})=>({
+      label, shown: opt.raw? full : this.short(full, opt.a||12, opt.b||8),
+      font: opt.sans? sans:mono, size: opt.size||'13px', weight: opt.weight||'400',
+      color: opt.color||'var(--text)', copyable: !!opt.copyable,
+      copyColor: s.copied===key?'var(--green)':'var(--text2)',
+      onCopy: ()=>this.copy(key, full)
+    });
+
+    const fields = [
+      mk('amt','Amount', this.fmt(sats)+' sats', {sans:true,size:'15px',weight:'600',raw:true,color:'var(--amber)'}),
+      mk('desc','Description', D.description, {sans:true,raw:true}),
+      mk('iss','Issuer', D.issuer, {sans:true,raw:true,weight:'600'}),
+      mk('node','Payee node_id', D.payeeNode, {copyable:true,a:10,b:8}),
+      mk('ph','Payment hash', D.paymentHash, {copyable:true,a:10,b:8}),
+      mk('pre','Preimage', D.preimage, {copyable:true,a:10,b:8,color:'var(--violet)'}),
+      mk('pk','Payer key', D.payerKey, {copyable:true,a:10,b:8}),
+      mk('ct','Created at', D.created, {raw:true,size:'12.5px'})
+    ];
+
+    const tlv = [
+      { type:'10', name:'offer_description', len:'26', value:'"Support BOLT12 development"' },
+      { type:'18', name:'offer_issuer', len:'15', value:'"vincenzopalazzo"' },
+      { type:'22', name:'offer_node_id', len:'33', value:this.short(D.payeeNode,12,8) },
+      { type:'80', name:'invreq_amount', len:'8', value:'50000000 msat' },
+      { type:'168',name:'invoice_created_at', len:'4', value:'1781768... ('+'2026‑06‑14)' },
+      { type:'170',name:'invoice_payment_hash', len:'32', value:this.short(D.paymentHash,12,8) },
+      { type:'240',name:'signature (payee)', len:'64', value:D.payeeSig },
+      { type:'242',name:'payer_proof_sig', len:'64', value:D.payerSig }
+    ];
+
+    const offerFields = [
+      mk('od','Description', D.description, {sans:true,raw:true}),
+      mk('oi','Issuer', D.issuer, {sans:true,raw:true,weight:'600'}),
+      mk('oa','Amount', 'any (payer chooses)', {sans:true,raw:true,color:'var(--text2)'}),
+      mk('on','Node id', D.payeeNode, {a:10,b:8}),
+      mk('oc','Chains', 'bitcoin (mainnet)', {sans:true,raw:true}),
+      mk('oq','Quantity', 'unbounded', {sans:true,raw:true})
+    ];
+    const invoiceFields = [
+      mk('ia','Amount', this.fmt(sats)+' sats', {sans:true,raw:true,weight:'600',color:'var(--amber)'}),
+      mk('id','Description', D.description, {sans:true,raw:true}),
+      mk('in','Payee node', D.payeeNode, {a:10,b:8}),
+      mk('iph','Payment hash', D.paymentHash, {a:10,b:8}),
+      mk('iexp','Expiry', '7200 s (2 h)', {sans:true,raw:true}),
+      mk('icr','Created at', D.created, {raw:true,size:'12.5px'})
+    ];
+
+    return {
+      theme:s.theme, isDark:s.theme==='dark', isLight:s.theme==='light',
+      query:s.query, onQuery:this.onQuery, onSubmit:this.onSubmit,
+      goHome:this.goHome, goProof:this.goProof, goOffer:this.goOffer, goInvoice:this.goInvoice,
+      toggleTheme:this.toggleTheme, toggleTlv:this.toggleTlv, replay:this.replay,
+      isLanding:s.screen==='landing', isProof:s.screen==='proof', isOffer:s.screen==='offer', isInvoice:s.screen==='invoice',
+      notLanding:s.screen!=='landing',
+      // proof
+      proofStr:D.proofStr, offerStr:D.offerStr, invoiceStr:D.invoiceStr,
+      copyProof:()=>this.copy('proof',D.proofStr),
+      copyProofLabel: s.copied==='proof'?'Copied ✓':'Copy',
+      verifyStep:step, verifying:!allVerified, allVerified,
+      verifyPct: (step/4*100).toFixed(0)+'%',
+      statusLabel: allVerified?'PAYMENT VERIFIED':'VERIFYING…',
+      amountSats:this.fmt(sats), amountBtc:(sats/1e8).toFixed(5),
+      issuer:D.issuer, description:D.description, payerNote:D.payerNote,
+      checks, disclosure, revealedCount, totalFields:disclosure.length,
+      merkleShort:D.merkle, fields, tlv, tlvCount:tlv.length,
+      showTlv:s.showTlv, tlvArrow: s.showTlv?'180deg':'0deg',
+      // offer / invoice
+      offerDesc:D.description, offerAmount:'any', offerFields, invoiceFields
+    };
+  }
+}
+</script>
+</body>
+</html>

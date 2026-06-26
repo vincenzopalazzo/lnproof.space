@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#e8e4da}
+  ::selection{background:#1a1a18;color:#f4f1e9}
+  @keyframes stampIn{0%{transform:rotate(-12deg) scale(2.4);opacity:0}55%{opacity:.55}100%{transform:rotate(-9deg) scale(1);opacity:1}}
+  @keyframes tick{0%{transform:scale(.2)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+  @keyframes scanLine{0%{top:0}100%{top:100%}}
+</style>
+</helmet>
+<div style="min-height:100vh;background:repeating-linear-gradient(135deg,#e8e4da 0,#e8e4da 22px,#e5e1d6 22px,#e5e1d6 23px);font-family:'IBM Plex Mono',monospace;color:#1a1a18;padding:46px 20px;display:flex;justify-content:center">
+
+  <div style="width:100%;max-width:560px">
+    <!-- meta line -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;font-size:11px;letter-spacing:.04em;color:#6b6657">
+      <span>LNPROOF · BOLT12 PAYER PROOF</span>
+      <span>proposal #1295</span>
+    </div>
+
+    <!-- the receipt -->
+    <div style="position:relative;background:#f7f4ec;border:1px solid #d6d0c0;box-shadow:0 1px 0 #fff inset, 0 30px 50px -34px rgba(40,34,20,.5);padding:0">
+
+      <!-- top perforation -->
+      <div style="height:14px;background:radial-gradient(circle at 7px 14px, transparent 6px, #f7f4ec 6.5px) 0 0/14px 14px repeat-x;border-bottom:1px dashed #cfc8b6"></div>
+
+      <div style="padding:30px 38px 14px">
+        <!-- header -->
+        <div style="text-align:center;border-bottom:2px solid #1a1a18;padding-bottom:18px">
+          <div style="font-family:'Fraunces',serif;font-size:25px;font-weight:600;letter-spacing:-.01em">Proof of Payment</div>
+          <div style="margin-top:5px;font-size:11px;letter-spacing:.16em;color:#6b6657">CRYPTOGRAPHICALLY VERIFIED RECEIPT</div>
+        </div>
+
+        <!-- amount block -->
+        <div style="text-align:center;padding:26px 0 18px;border-bottom:1px dashed #cfc8b6;position:relative">
+          <div style="font-size:11px;letter-spacing:.14em;color:#6b6657">AMOUNT PAID</div>
+          <div style="font-family:'Fraunces',serif;font-size:48px;font-weight:600;line-height:1.05;margin-top:6px">50,000<span style="font-size:20px;color:#6b6657;font-family:'IBM Plex Mono';font-weight:500"> sats</span></div>
+          <div style="font-size:12px;color:#8a836f;margin-top:2px">0.00050000 BTC</div>
+
+          <!-- VERIFIED stamp -->
+          <div style="position:absolute;top:14px;right:-6px;transform:rotate(-9deg);animation:stampIn .7s cubic-bezier(.2,1.1,.3,1) both">
+            <div style="border:2.5px solid #1c7a4a;color:#1c7a4a;border-radius:7px;padding:6px 11px;text-align:center;opacity:.86">
+              <div style="font-size:15px;font-weight:700;letter-spacing:.1em;line-height:1">VERIFIED</div>
+              <div style="font-size:8px;letter-spacing:.12em;margin-top:2px">2026·06·14</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- line items -->
+        <div style="padding:18px 0;border-bottom:1px dashed #cfc8b6;display:flex;flex-direction:column;gap:11px">
+          <sc-for list="{{ lines }}" as="l" hint-placeholder-count="6">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px;font-size:13px">
+              <span style="color:#6b6657;white-space:nowrap">{{ l.k }}</span>
+              <span style="flex:1;border-bottom:1px dotted #cfc8b6;transform:translateY(-3px)"></span>
+              <span style="font-weight:{{ l.w }};text-align:right;word-break:break-all;max-width:62%">{{ l.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- payer note -->
+        <div style="padding:16px 0;border-bottom:1px dashed #cfc8b6">
+          <div style="font-size:11px;letter-spacing:.12em;color:#6b6657;margin-bottom:6px">MEMO FROM PAYER</div>
+          <div style="font-family:'Fraunces',serif;font-style:italic;font-size:16px">"Thanks for your work on Core Lightning!"</div>
+        </div>
+
+        <!-- verification checklist -->
+        <div style="padding:18px 0 6px">
+          <div style="font-size:11px;letter-spacing:.12em;color:#6b6657;margin-bottom:11px">VERIFICATION</div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <sc-for list="{{ checks }}" as="c" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:10px;font-size:12.5px">
+                <span style="flex-shrink:0;width:19px;height:19px;border:1.5px solid #1c7a4a;border-radius:4px;display:grid;place-items:center;background:{{ c.bg }}">
+                  <sc-if value="{{ c.done }}" hint-placeholder-val="{{ true }}">
+                    <svg style="animation:tick .4s ease both" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1c7a4a" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                  </sc-if>
+                </span>
+                <span style="flex:1">{{ c.label }}</span>
+                <span style="font-size:10.5px;color:#1c7a4a;font-weight:600">PASS</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <!-- preimage barcode strip -->
+      <div style="margin:6px 38px 0;padding:14px 0;border-top:1px dashed #cfc8b6">
+        <div style="font-size:10px;letter-spacing:.12em;color:#6b6657;margin-bottom:8px">PAYMENT PREIMAGE — THE PROOF</div>
+        <div style="display:flex;gap:1.5px;height:42px;align-items:stretch">
+          <sc-for list="{{ bars }}" as="b" hint-placeholder-count="60">
+            <span style="flex:1;background:#1a1a18;width:{{ b.w }}"></span>
+          </sc-for>
+        </div>
+        <div style="margin-top:7px;font-size:10.5px;letter-spacing:.05em;color:#8a836f;word-break:break-all;text-align:center">d4e1b7a2f8c3061954e2b8d7c1a6f0935e2c8b1d7a4f0e63b9c5a2d8f1e0b6c3</div>
+      </div>
+
+      <!-- bottom perforation -->
+      <div style="margin-top:8px;height:14px;background:radial-gradient(circle at 7px 0, transparent 6px, #f7f4ec 6.5px) 0 0/14px 14px repeat-x;border-top:1px dashed #cfc8b6"></div>
+    </div>
+
+    <!-- actions -->
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button onClick="{{ replay }}" style="flex:1;background:#1a1a18;color:#f4f1e9;border:none;padding:12px;font-family:'IBM Plex Mono';font-size:12.5px;font-weight:600;letter-spacing:.04em;cursor:pointer">REPLAY VERIFICATION</button>
+      <button style="flex:1;background:none;color:#1a1a18;border:1px solid #1a1a18;padding:12px;font-family:'IBM Plex Mono';font-size:12.5px;font-weight:600;letter-spacing:.04em;cursor:pointer">VIEW RAW TLV</button>
+    </div>
+    <div style="text-align:center;margin-top:14px;font-size:10.5px;color:#8a836f;letter-spacing:.04em">No blockchain. No ledger. Just math. — lnproof.space</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:600,&quot;height&quot;:1080}}">
+class Component extends DCLogic {
+  state = { tick:0 };
+  componentDidMount(){ this.run(); }
+  componentWillUnmount(){ clearInterval(this._t); }
+  run(){ clearInterval(this._t); this.setState({tick:0});
+    this._t=setInterval(()=>this.setState(s=> s.tick>=4 ? (clearInterval(this._t),null) : {tick:s.tick+1}), 600); }
+  replay=()=>this.run();
+  renderVals(){
+    const lines=[
+      {k:'Paid to', v:'vincenzopalazzo', w:600},
+      {k:'For', v:'Support BOLT12 development', w:500},
+      {k:'Date', v:'2026-06-14 09:32 UTC', w:500},
+      {k:'Payee node', v:'023f4a2b…d4e5f6a7', w:500},
+      {k:'Payment hash', v:'8a1f0c4d…9e1b5a2f', w:500},
+      {k:'Payer key', v:'0276c4a9…3f5e7b9c', w:500}
+    ];
+    const labels=['Preimage hashes to payment_hash','Invoice signed by payee node','Payer key authenticated proof','Merkle disclosure intact'];
+    const checks=labels.map((label,i)=>({label, done:i<this.state.tick, bg:i<this.state.tick?'#e6f0e9':'transparent'}));
+    // deterministic barcode from preimage hex
+    const hex='d4e1b7a2f8c3061954e2b8d7c1a6f0935e2c8b1d7a4f0e63b9c5a2d8f1e0b6c3';
+    const bars=[]; for(let i=0;i<60;i++){ const n=parseInt(hex[i%hex.length],16); bars.push({w:(n%4>1?'2px':'1px')}); }
+    return { lines, checks, bars, replay:this.replay };
+  }
+}
+</script>
+</body>
+</html>
