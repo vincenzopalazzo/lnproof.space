@@ -5,22 +5,27 @@ on:
     branches: [main]
   pull_request:
 
-# Cancel superseded runs on the same ref to save CI minutes.
+# Least privilege by default; the deploy job widens to exactly what it needs.
+permissions:
+  contents: read
+
+# Cancel superseded PR runs to save CI minutes; never cancel a main run mid-deploy.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   check:
     name: check & build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -38,6 +43,7 @@ jobs:
     # Production deploy only — never from PRs or non-main branches.
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       deployments: write
@@ -47,7 +53,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
