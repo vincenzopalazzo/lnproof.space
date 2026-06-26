@@ -5,7 +5,8 @@ on:
     branches: [main]
   pull_request:
 
-# Least privilege by default; the deploy job widens to exactly what it needs.
+# Least privilege: this workflow only reads the repo (deploys are handled by the
+# Cloudflare Pages Git integration, not by Actions).
 permissions:
   contents: read
 
@@ -36,37 +37,3 @@ jobs:
 
       - name: Build
         run: npm run build
-
-  deploy:
-    name: deploy (Cloudflare Pages)
-    needs: check
-    # Production deploy only — never from PRs or non-main branches.
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-      deployments: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # Direct Upload of the static build to the production branch.
-          command: pages deploy build --project-name=lnproof-space --branch=main
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
