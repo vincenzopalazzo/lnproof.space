@@ -2,6 +2,11 @@
  * lnproof.space global styles
  * Tokens extracted verbatim from design/BOLT12 Explorer.dc.html
  * Minimal by design — no CSS framework, privacy-friendly (self-hostable).
+ *
+ * NOTE: this is a plain .css file imported from +layout.svelte, so every rule
+ * is already global. Do NOT wrap selectors in :global() here — that is Svelte
+ * <style> syntax and is an invalid selector in a plain stylesheet, which makes
+ * the browser silently drop the whole rule (light theme, animations, etc.).
  */
 
 /*
@@ -49,7 +54,7 @@
 	--shadow: 0 18px 50px -20px rgba(0, 0, 0, 0.7);
 }
 
-:global([data-theme='light']) {
+[data-theme='light'] {
 	--bg: #f5f6f9;
 	--bg2: #eceef3;
 	--panel: #ffffff;
@@ -74,34 +79,46 @@
 	--shadow: 0 16px 40px -22px rgba(20, 30, 60, 0.32);
 }
 
-:global(*:focus-visible) {
+/*
+ * Paint the themed background on the document root. Without this the browser's
+ * default body margin (and any overscroll/rubber-band area) shows through white
+ * around the app — the root <div> only covers min-height:100vh, not the margin.
+ */
+html,
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--text);
+}
+
+*:focus-visible {
 	outline: 2px solid var(--violet);
 	outline-offset: 2px;
 	border-radius: 4px;
 }
 
-:global(::selection) {
+::selection {
 	background: var(--violet-soft);
 	color: var(--text);
 }
 
-:global(::-webkit-scrollbar) {
+::-webkit-scrollbar {
 	width: 11px;
 	height: 11px;
 }
 
-:global(::-webkit-scrollbar-thumb) {
+::-webkit-scrollbar-thumb {
 	background: var(--border2);
 	border-radius: 8px;
 	border: 3px solid var(--bg);
 }
 
-:global(input::placeholder) {
+input::placeholder {
 	color: var(--muted);
 }
 
 /* Animations from the design */
-:global(@keyframes popIn) {
+@keyframes popIn {
 	0% {
 		transform: scale(0.4);
 	}
@@ -113,13 +130,13 @@
 	}
 }
 
-:global(@keyframes spin) {
+@keyframes spin {
 	to {
 		transform: rotate(360deg);
 	}
 }
 
-:global(@keyframes fadeUp) {
+@keyframes fadeUp {
 	from {
 		opacity: 0;
 		transform: translateY(10px);
@@ -130,7 +147,7 @@
 	}
 }
 
-:global(@keyframes glowPulse) {
+@keyframes glowPulse {
 	0%,
 	100% {
 		box-shadow: 0 0 0 0 var(--green-soft);
@@ -142,7 +159,7 @@
 
 /* Proof view: collapse the ledger / disclosure columns on narrow screens. */
 @media (max-width: 760px) {
-	:global(.proof-grid) {
+	.proof-grid {
 		grid-template-columns: 1fr !important;
 	}
 }
