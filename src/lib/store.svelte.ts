@@ -1,13 +1,17 @@
 /**
  * Central explorer state — a Svelte 5 runes object shared across components.
  *
- * Navigation is driven by *decoding*: submitting a string (or loading a sample)
- * runs bolt12-utils via decode.ts and stores the resulting view. The screen is
- * simply `view.kind` (with a dedicated error screen for bad input).
+ * Navigation is URL-driven so every decoded string is shareable as
+ * `lnproof.space/<string>`. The decode itself happens in `applyUrl`, called by
+ * the route's effect whenever the path param changes.
+ *
+ * Zap feed / detail use reserved paths `/zaps` and `/zaps/<index>` so they
+ * stay shareable without colliding with BOLT12 bech32 strings. Live relay
+ * fetch is intentionally out of scope — no WebSocket phone-home by default.
  */
 import { goto } from '$app/navigation';
 import type { Screen, Theme } from './data';
-import { SAMPLES } from './data';
+import { SAMPLES, SAMPLE_ZAPS } from './data';
 import { decodeInput, type DecodeView } from './decode';
 
 const THEME_KEY = 'lnproof-theme';
@@ -28,6 +32,11 @@ interface ExplorerState {
 	showTlv: boolean;
 	copied: string;
 	view: DecodeView | null;
+	/** Index into SAMPLE_ZAPS when screen is `zapDetail`. */
+	zapIndex: number;
+	/** Ephemeral toast message (empty = hidden). */
+	toast: string;
+	toastKind: 'ok' | 'err';
 }
 
 export const explorer: ExplorerState = $state({
@@ -37,11 +46,15 @@ export const explorer: ExplorerState = $state({
 	verifyStep: 0,
 	showTlv: false,
 	copied: '',
-	view: null
+	view: null,
+	zapIndex: 0,
+	toast: '',
+	toastKind: 'ok'
 });
 
 let verifyTimer: ReturnType<typeof setInterval> | null = null;
 let copyTimer: ReturnType<typeof setTimeout> | null = null;
+let toastTimer: ReturnType<typeof setTimeout> | null = null;
 
 /** Apply a decoded view: switch to the matching screen, animate proofs. */
 function show(view: DecodeView): void {
@@ -67,6 +80,17 @@ export function goHome(): void {
 	navigate('');
 }
 
+/** Open the NIP-102 BOLT12 zap feed (concept fixtures). */
+export function goZaps(): void {
+	navigate('zaps');
+}
+
+/** Open a single zap detail from the feed. */
+export function openZap(index: number): void {
+	const i = Math.max(0, Math.min(index, SAMPLE_ZAPS.length - 1));
+	navigate(`zaps/${i}`);
+}
+
 /** Decode whatever is currently in the search box. */
 export function onSubmit(): void {
 	const q = explorer.query.trim();
@@ -84,6 +108,10 @@ export function loadSample(kind: 'proof' | 'offer' | 'invoice'): void {
  * Sync state from the URL path. `code` is the decoded `[[code]]` route param
  * (empty for the landing page). This is the single place that mutates the
  * screen/view from a navigation, so deep links and back/forward Just Work.
+ *
+ * Reserved paths:
+ *   - `zaps`       → zap feed
+ *   - `zaps/<n>`   → zap detail for SAMPLE_ZAPS[n]
  */
 export function applyUrl(code: string): void {
 	const raw = code.trim();
@@ -95,9 +123,35 @@ export function applyUrl(code: string): void {
 			explorer.view = null;
 			explorer.query = '';
 			explorer.verifyStep = 0;
+			explorer.zapIndex = 0;
 		}
 		return;
 	}
+
+	// Reserved zap routes (not BOLT12 bech32).
+	if (raw === 'zaps') {
+		stopTimers();
+		explorer.screen = 'zaps';
+		explorer.view = null;
+		explorer.query = '';
+		explorer.verifyStep = 0;
+		return;
+	}
+	const zapDetail = /^zaps\/(\d+)$/.exec(raw);
+	if (zapDetail) {
+		const idx = Number(zapDetail[1]);
+		const clamped = Number.isFinite(idx)
+			? Math.max(0, Math.min(idx, SAMPLE_ZAPS.length - 1))
+			: 0;
+		stopTimers();
+		explorer.zapIndex = clamped;
+		explorer.screen = 'zapDetail';
+		explorer.view = null;
+		explorer.query = '';
+		explorer.verifyStep = 0;
+		return;
+	}
+
 	if (explorer.view?.raw === raw) return; // already showing this exact string
 	explorer.query = raw;
 	show(decodeInput(raw));
@@ -150,6 +204,16 @@ export function setCopied(key: string): void {
 	}, 1400);
 }
 
+/** Brief toast (bottom of viewport). Auto-clears after ~1.9s. */
+export function showToast(msg: string, kind: 'ok' | 'err' = 'ok'): void {
+	explorer.toast = msg;
+	explorer.toastKind = kind;
+	if (toastTimer) clearTimeout(toastTimer);
+	toastTimer = setTimeout(() => {
+		explorer.toast = '';
+	}, 1900);
+}
+
 export function stopTimers(): void {
 	if (verifyTimer) {
 		clearInterval(verifyTimer);
@@ -158,5 +222,9 @@ export function stopTimers(): void {
 	if (copyTimer) {
 		clearTimeout(copyTimer);
 		copyTimer = null;
+	}
+	if (toastTimer) {
+		clearTimeout(toastTimer);
+		toastTimer = null;
 	}
 }

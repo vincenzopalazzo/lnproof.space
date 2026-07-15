@@ -163,3 +163,13 @@ input::placeholder {
 		grid-template-columns: 1fr !important;
 	}
 }
+
+/* Zap feed: stack the relay sidebar under the feed on narrow screens. */
+@media (max-width: 720px) {
+	.zap-grid {
+		grid-template-columns: 1fr !important;
+	}
+	.zap-grid aside {
+		position: static !important;
+	}
+}

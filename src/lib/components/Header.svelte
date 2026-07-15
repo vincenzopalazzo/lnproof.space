@@ -1,7 +1,11 @@
 <script lang="ts">
-	import { explorer, copyShareLink, goHome, onQuery, onSubmit, toggleTheme } from '$lib/store.svelte';
+	import { explorer, goHome, goZaps, onQuery, onSubmit, toggleTheme } from '$lib/store.svelte';
 
 	let { notLanding = false } = $props();
+
+	const zapsActive = $derived(
+		explorer.screen === 'zaps' || explorer.screen === 'zapDetail'
+	);
 </script>
 
 <header
@@ -47,27 +51,21 @@
 
 	<div style="flex:1"></div>
 
-	{#if notLanding}
-		<button
-			onclick={copyShareLink}
-			title="Copy a shareable link to this decode"
-			style="display:flex;align-items:center;gap:7px;padding:6px 11px;border:1px solid {explorer.copied === 'share' ? 'var(--green-line)' : 'var(--border)'};border-radius:9px;background:var(--panel);font-size:12px;color:{explorer.copied === 'share' ? 'var(--green)' : 'var(--text2)'};font-weight:500;cursor:pointer;font-family:'Space Grotesk';transition:.16s"
-		>
-			{#if explorer.copied === 'share'}
-				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
-					><path d="M20 6 9 17l-5-5" /></svg
-				>
-				Copied
-			{:else}
-				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-					><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1" /><path
-						d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"
-					/></svg
-				>
-				Copy link
-			{/if}
-		</button>
-	{/if}
+	<button
+		onclick={goZaps}
+		aria-label="BOLT12 Zaps"
+		style="display:flex;align-items:center;gap:7px;padding:7px 13px;border:1px solid {zapsActive
+			? 'var(--violet-line)'
+			: 'var(--border)'};border-radius:9px;background:{zapsActive
+			? 'var(--violet-soft)'
+			: 'var(--panel)'};font-size:13px;color:{zapsActive
+			? 'var(--violet)'
+			: 'var(--text2)'};font-weight:600;cursor:pointer;font-family:'Space Grotesk'"
+	>
+		<svg width="14" height="14" viewBox="0 0 24 24" fill={zapsActive ? 'var(--violet)' : 'var(--text2)'}
+			><path d="M13 2 4 14h6l-1 8 9-12h-6z" /></svg
+		>Zaps
+	</button>
 
 	<div
 		style="display:flex;align-items:center;gap:6px;padding:6px 11px;border:1px solid var(--border);border-radius:9px;background:var(--panel);font-size:12px;color:var(--text2);font-weight:500"
