@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { explorer, loadSample, onQuery, onSubmit } from '$lib/store.svelte';
+	import { explorer, loadSample, onQuery, onSubmit, goZaps } from '$lib/store.svelte';
 	import { SAMPLES } from '$lib/data';
 	import { short } from '$lib/format';
 
@@ -47,15 +47,23 @@
 				>Decode</button
 			>
 		</form>
-		<button
-			onclick={() => loadSample('proof')}
-			style="background:none;border:none;color:var(--text2);font-size:13px;cursor:pointer;font-family:'Space Grotesk'"
-		>
-			or try a
-			<span style="color:var(--violet);font-weight:600;text-decoration:underline;text-underline-offset:3px"
-				>sample payer proof →</span
+		<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:center">
+			<button
+				onclick={() => loadSample('proof')}
+				style="background:none;border:none;color:var(--text2);font-size:13px;cursor:pointer;font-family:'Space Grotesk'"
 			>
-		</button>
+				or try a
+				<span style="color:var(--violet);font-weight:600;text-decoration:underline;text-underline-offset:3px"
+					>sample payer proof →</span
+				>
+			</button>
+			<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)">
+				<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+					><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg
+				>
+				Decoding runs locally — nothing leaves your browser
+			</span>
+		</div>
 	</div>
 
 	<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:54px">
@@ -112,6 +120,24 @@
 			>
 			<span style="font-family:'JetBrains Mono';font-size:11px;color:var(--muted);margin-top:2px"
 				>{preview(SAMPLES.invoice)}</span
+			>
+		</button>
+		<button
+			onclick={goZaps}
+			class="card"
+			style="text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:11px;padding:20px;border-radius:9px;border:1px solid var(--border);background:var(--panel);color:var(--text);transition:.16s"
+		>
+			<span
+				style="display:inline-flex;align-self:flex-start;align-items:center;gap:6px;padding:4px 9px;border-radius:7px;background:var(--violet-soft);color:var(--violet);font-size:11px;font-weight:700;letter-spacing:.04em"
+				>⚡ BOLT12 ZAPS</span
+			>
+			<span style="font-weight:600;font-size:15px">A public zap feed on Nostr</span>
+			<span style="font-size:13px;color:var(--text2);line-height:1.5"
+				>Verified <span style="font-family:'JetBrains Mono';font-size:12px">kind 9736</span> payment proofs,
+				with the relays they're published on.</span
+			>
+			<span style="font-family:'JetBrains Mono';font-size:11px;color:var(--muted);margin-top:2px"
+				>NIP-102 · nostr</span
 			>
 		</button>
 	</div>
