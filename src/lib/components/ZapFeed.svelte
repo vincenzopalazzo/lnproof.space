@@ -76,7 +76,7 @@
 			<div
 				style="display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--border)"
 			>
-				<h2 style="margin:0;font-size:14.5px;font-weight:600">Recent verified zaps</h2>
+				<h2 style="margin:0;font-size:14.5px;font-weight:600">Recent zaps</h2>
 				<span style="font-size:11.5px;color:var(--muted);font-family:'JetBrains Mono'"
 					>deduped by payment_hash</span
 				>

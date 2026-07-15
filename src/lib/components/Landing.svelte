@@ -133,8 +133,8 @@
 			>
 			<span style="font-weight:600;font-size:15px">A public zap feed on Nostr</span>
 			<span style="font-size:13px;color:var(--text2);line-height:1.5"
-				>Verified <span style="font-family:'JetBrains Mono';font-size:12px">kind 9736</span> payment proofs,
-				with the relays they're published on.</span
+				>Concept <span style="font-family:'JetBrains Mono';font-size:12px">kind 9736</span> NIP-102 zap
+				events — structure, binding, and the relays they would publish on.</span
 			>
 			<span style="font-family:'JetBrains Mono';font-size:11px;color:var(--muted);margin-top:2px"
 				>NIP-102 · nostr</span
