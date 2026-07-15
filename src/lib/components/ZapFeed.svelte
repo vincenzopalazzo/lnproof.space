@@ -69,21 +69,33 @@
 				<span style="font-family:'JetBrains Mono';font-size:12.5px">lnp</span> payer proof.
 			</p>
 			<p style="margin:8px 0 0;font-size:12px;color:var(--muted);max-width:64ch;line-height:1.45">
-				Live feed from your configured relays. Only events with NIP-102 tags
-				(<span style="font-family:'JetBrains Mono';font-size:11px">proof</span> /
+				Live feed from your configured relays, cached in this browser (IndexedDB). Only events with
+				NIP-102 tags (<span style="font-family:'JetBrains Mono';font-size:11px">proof</span> /
 				<span style="font-family:'JetBrains Mono';font-size:11px">offer</span> /
 				<span style="font-family:'JetBrains Mono';font-size:11px">description</span>) are shown —
 				other kind-9736 traffic is ignored.
 			</p>
+			{#if zapFeed.fromCache || zapFeed.syncing || zapFeed.lastSyncedAt}
+				<p style="margin:8px 0 0;font-size:11.5px;color:var(--muted);font-family:'JetBrains Mono'">
+					{#if zapFeed.syncing}
+						Syncing relays… · showing {zapFeed.cachedCount || zapFeed.zaps.length} cached
+					{:else if zapFeed.lastSyncedAt}
+						Cached {zapFeed.cachedCount} · last sync {new Date(zapFeed.lastSyncedAt).toLocaleTimeString()}
+					{:else if zapFeed.fromCache}
+						Loaded from local cache
+					{/if}
+				</p>
+			{/if}
 		</div>
 		<button
 			onclick={() => refreshZaps(true)}
-			disabled={zapFeed.loading}
-			style="display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border-radius:9px;border:1px solid var(--border);background:var(--elev);color:var(--text);font-weight:600;font-size:13px;cursor:pointer;font-family:'Space Grotesk';opacity:{zapFeed.loading
+			disabled={zapFeed.loading || zapFeed.syncing}
+			style="display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border-radius:9px;border:1px solid var(--border);background:var(--elev);color:var(--text);font-weight:600;font-size:13px;cursor:pointer;font-family:'Space Grotesk';opacity:{zapFeed.loading ||
+			zapFeed.syncing
 				? 0.6
 				: 1}"
 		>
-			{zapFeed.loading ? 'Fetching…' : 'Refresh'}
+			{zapFeed.loading ? 'Fetching…' : zapFeed.syncing ? 'Syncing…' : 'Refresh'}
 		</button>
 	</div>
 
@@ -225,7 +237,7 @@
 						>Relays
 					</h2>
 					<p style="margin:7px 0 0;font-size:11.5px;color:var(--text2);line-height:1.45">
-						Zap events are queried live. Clients filter by
+						Events hydrate from IndexedDB first, then sync from relays. Clients filter by
 						<span style="font-family:'JetBrains Mono';font-size:11px">#p</span>,
 						<span style="font-family:'JetBrains Mono';font-size:11px">#e</span>
 						or

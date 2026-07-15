@@ -54,7 +54,7 @@
 		<div
 			style="padding:28px 26px;border-radius:10px;border:1px solid var(--border);background:var(--panel);font-size:14px;color:var(--text2)"
 		>
-			Loading zap from relays…
+			Loading zap (cache + relays)…
 		</div>
 	{:else if missing || !detail}
 		<div
