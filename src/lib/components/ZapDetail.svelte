@@ -48,8 +48,8 @@
 				>
 				{#if detail.structurallyValid}
 					<span
-						style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--text2);background:var(--panel2);border:1px solid var(--border);padding:2px 8px;border-radius:6px"
-						>SHAPE OK</span
+						style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-line);padding:2px 8px;border-radius:6px"
+						>VALID</span
 					>
 				{:else}
 					<span
@@ -150,13 +150,13 @@
 		style="margin-top:18px;border:1px solid var(--border);border-radius:10px;background:var(--panel);overflow:hidden"
 	>
 		<div style="padding:15px 18px;border-bottom:1px solid var(--border)">
-			<h2 style="margin:0;font-size:14.5px;font-weight:600">NIP-102 shape checklist</h2>
+			<h2 style="margin:0;font-size:14.5px;font-weight:600">NIP-102 validation</h2>
 			<p style="margin:6px 0 0;font-size:12px;color:var(--text2);line-height:1.45">
-				Shape checks only for the offline concept fixture — not cryptographic verification.
-				The sample
+				Offline concept fixture for the NIP-102 event shape. The linked
 				<span style="font-family:'JetBrains Mono';font-size:11px">lnp</span>
-				may not match this row's amount / payer note; open the Proof explorer for real preimage ·
-				invoice sig · payer sig · Merkle checks.
+				is a real payer proof minted for this row's amount and
+				<span style="font-family:'JetBrains Mono';font-size:11px">nostr:nip102:&lt;intent&gt;</span>
+				note — open the Proof explorer for preimage · invoice sig · payer sig · Merkle.
 			</p>
 		</div>
 		<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
@@ -166,14 +166,14 @@
 				>
 					{#if v.pass}
 						<span
-							style="flex-shrink:0;width:24px;height:24px;border-radius:7px;background:var(--elev);border:1px solid var(--border);display:grid;place-items:center"
+							style="flex-shrink:0;width:24px;height:24px;border-radius:7px;background:var(--green-soft);border:1px solid var(--green-line);display:grid;place-items:center"
 						>
 							<svg
 								width="13"
 								height="13"
 								viewBox="0 0 24 24"
 								fill="none"
-								stroke="var(--text2)"
+								stroke="var(--green)"
 								stroke-width="3"
 								stroke-linecap="round"
 								stroke-linejoin="round"><path d="m5 13 4 4L19 7" /></svg
@@ -250,7 +250,7 @@
 			onclick={() => openProof(fixture.proof)}
 			style="display:flex;align-items:center;gap:8px;background:var(--violet);color:#fff;border:none;border-radius:9px;padding:11px 18px;font-weight:600;font-size:13.5px;cursor:pointer;font-family:'Space Grotesk'"
 		>
-			Inspect the sample lnp proof
+			Inspect the lnp payer proof
 			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
 				><path d="M5 12h14M13 6l6 6-6 6" /></svg
 			>

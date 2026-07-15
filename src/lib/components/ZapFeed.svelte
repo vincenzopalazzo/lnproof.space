@@ -121,8 +121,8 @@
 							>
 							{#if z.structurallyValid}
 								<span
-									style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--text2);background:var(--panel2);border:1px solid var(--border);padding:3px 8px;border-radius:6px;letter-spacing:.03em"
-									>SHAPE OK</span
+									style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-line);padding:3px 8px;border-radius:6px;letter-spacing:.03em"
+									>VALID</span
 								>
 							{:else}
 								<span

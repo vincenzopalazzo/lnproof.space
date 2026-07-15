@@ -13,6 +13,7 @@
  * Spec: https://github.com/matbalez/universal-lightning-wallet/blob/main/NIP-102.md
  * Offer discovery (NIP-100): kind 0 `lno` field.
  */
+import { decodePayerProof, verifyPayerProof, extractInvoiceFields } from 'bolt12-utils';
 import { fmt, short } from './format';
 import type { SampleRelay, SampleZap } from './data';
 import { SAMPLE_RELAYS, SAMPLE_ZAPS } from './data';
@@ -94,16 +95,43 @@ function relayHost(url: string): string {
 	return url.replace(/^wss:\/\//, '').replace(/^ws:\/\//, '');
 }
 
-/** Structural shape check for a concept fixture / future live event. */
+/** Shape + optional live lnp cross-checks for a concept fixture. */
 export function validateZapStructure(z: SampleZap): ValidationRow[] {
 	const hasP = !!z.recipientPubkey;
 	const hasAmount = z.amountSats > 0;
 	const hasOffer = !!z.offer && z.offer.toLowerCase().startsWith('lno');
 	const hasProof = !!z.proof && z.proof.toLowerCase().startsWith('lnp');
 	const hasIntent = !!z.intentId;
-	const hasPayerNote = z.payerNote === `nostr:nip102:${z.intentId}`;
+	const expectedNote = `nostr:nip102:${z.intentId}`;
+	const hasPayerNote = z.payerNote === expectedNote;
 	const exclusiveTarget = !(z.eventId && z.addressable);
 	const tagsOk = hasP && hasAmount && hasOffer && hasProof && hasIntent;
+
+	// Best-effort crypto cross-check against the fixture's real lnp (minted offline).
+	let proofCryptoOk = false;
+	let noteMatchesProof = false;
+	let amountMatchesProof = false;
+	let cryptoDetail = 'proof not decoded';
+	if (hasProof) {
+		try {
+			const decoded = decodePayerProof(z.proof);
+			const verdict = verifyPayerProof(decoded.proof);
+			proofCryptoOk = !!verdict.valid;
+			const proofNote = (decoded.proof as { proofNote?: string; payerNote?: string }).proofNote
+				|| (decoded.proof as { payerNote?: string }).payerNote
+				|| '';
+			noteMatchesProof = proofNote === expectedNote;
+			const inv = extractInvoiceFields(decoded.records);
+			const msat = inv.invoice_amount ?? inv.invreq_amount ?? 0n;
+			const sats = Math.round(Number(msat) / 1000);
+			amountMatchesProof = sats === z.amountSats;
+			cryptoDetail = proofCryptoOk
+				? `preimage · sigs · Merkle OK · ${sats} sats`
+				: (verdict.error || 'verifyPayerProof failed');
+		} catch (e) {
+			cryptoDetail = e instanceof Error ? e.message : String(e);
+		}
+	}
 
 	return [
 		{
@@ -117,9 +145,9 @@ export function validateZapStructure(z: SampleZap): ValidationRow[] {
 			pass: hasIntent && hasP && hasAmount && hasOffer
 		},
 		{
-			t: 'Payer-note string form',
+			t: 'Payer-note binds intent id',
 			d: hasPayerNote
-				? `fixture note = nostr:nip102:${short(z.intentId, 8, 4)} (not decoded from lnp)`
+				? `nostr:nip102:${short(z.intentId, 8, 4)}`
 				: 'missing invreq_payer_note binding',
 			pass: hasPayerNote
 		},
@@ -129,11 +157,23 @@ export function validateZapStructure(z: SampleZap): ValidationRow[] {
 			pass: exclusiveTarget
 		},
 		{
-			t: 'lnp proof string present',
-			d: hasProof
-				? `${short(z.proof, 10, 6)} — open Proof explorer for crypto checks`
-				: 'no proof tag',
-			pass: hasProof
+			t: 'lnp proof cryptographically valid',
+			d: cryptoDetail,
+			pass: proofCryptoOk
+		},
+		{
+			t: 'Proof note matches zap intent',
+			d: noteMatchesProof
+				? 'proof note = nostr:nip102:<intentId>'
+				: 'proof note does not match fixture payerNote',
+			pass: noteMatchesProof
+		},
+		{
+			t: 'Proof amount matches zap amount',
+			d: amountMatchesProof
+				? `${fmt(z.amountSats)} sats`
+				: 'proof amount differs from zap amount tag',
+			pass: amountMatchesProof
 		}
 	];
 }
