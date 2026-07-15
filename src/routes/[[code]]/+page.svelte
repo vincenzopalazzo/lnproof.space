@@ -13,7 +13,7 @@
 	import Footer from '$lib/components/Footer.svelte';
 
 	// The URL drives what's decoded: `/<string>` shows that decode, `/` is the
-	// landing page, `/zaps` and `/zaps/<n>` are NIP-102 concept screens.
+	// landing page, `/zaps` and `/zaps-<eventId>` are live NIP-102 zap screens.
 	// Track only the path param; untrack the state mutation so this effect never
 	// re-runs on its own writes (and handles back/forward for free).
 	$effect(() => {
