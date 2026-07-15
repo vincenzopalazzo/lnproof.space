@@ -115,23 +115,19 @@
 							</div>
 						{/if}
 						<div style="margin-top:9px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+							<span
+								style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--text2);background:var(--elev);border:1px solid var(--border);padding:3px 8px;border-radius:6px;letter-spacing:.03em"
+								>CONCEPT</span
+							>
 							{#if z.structurallyValid}
 								<span
-									style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-line);padding:3px 8px;border-radius:6px;letter-spacing:.03em"
+									style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--text2);background:var(--panel2);border:1px solid var(--border);padding:3px 8px;border-radius:6px;letter-spacing:.03em"
+									>SHAPE OK</span
 								>
-									<svg
-										width="11"
-										height="11"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										stroke-width="3"><path d="m5 13 4 4L19 7" /></svg
-									>STRUCTURE OK
-								</span>
 							{:else}
 								<span
-									style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--amber);background:var(--amber-soft);border:1px solid rgba(247,168,59,.35);padding:3px 8px;border-radius:6px;letter-spacing:.03em"
-									>INCOMPLETE</span
+									style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber);padding:3px 8px;border-radius:6px;letter-spacing:.03em"
+									>SHAPE INCOMPLETE</span
 								>
 							{/if}
 							{#each z.relayChips as r (r)}

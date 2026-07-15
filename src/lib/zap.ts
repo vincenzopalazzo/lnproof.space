@@ -107,18 +107,20 @@ export function validateZapStructure(z: SampleZap): ValidationRow[] {
 
 	return [
 		{
-			t: 'Zap event structure valid',
-			d: 'kind 9736 · single p · amount · offer · proof',
+			t: 'Zap event structure present',
+			d: 'kind 9736 · single p · amount · offer · proof (fixture fields)',
 			pass: tagsOk
 		},
 		{
-			t: 'Intent binds recipient + amount + offer',
-			d: `kind ${ZAP_INTENT_KIND} · zap_id present`,
+			t: 'Intent fields present',
+			d: `kind ${ZAP_INTENT_KIND} · zap_id present (fixture)`,
 			pass: hasIntent && hasP && hasAmount && hasOffer
 		},
 		{
-			t: 'Payer note binds the proof',
-			d: hasPayerNote ? `nostr:nip102:${short(z.intentId, 8, 4)}` : 'missing invreq_payer_note binding',
+			t: 'Payer-note string form',
+			d: hasPayerNote
+				? `fixture note = nostr:nip102:${short(z.intentId, 8, 4)} (not decoded from lnp)`
+				: 'missing invreq_payer_note binding',
 			pass: hasPayerNote
 		},
 		{
@@ -127,8 +129,10 @@ export function validateZapStructure(z: SampleZap): ValidationRow[] {
 			pass: exclusiveTarget
 		},
 		{
-			t: 'lnp proof present (settled artifact)',
-			d: hasProof ? short(z.proof, 10, 6) : 'no proof tag',
+			t: 'lnp proof string present',
+			d: hasProof
+				? `${short(z.proof, 10, 6)} — open Proof explorer for crypto checks`
+				: 'no proof tag',
 			pass: hasProof
 		}
 	];

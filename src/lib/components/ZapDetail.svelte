@@ -1,8 +1,10 @@
 <script lang="ts">
-	import { explorer, goHome, goZaps, loadSample } from '$lib/store.svelte';
+	import { explorer, goHome, goZaps, openProof } from '$lib/store.svelte';
+	import { SAMPLE_ZAPS } from '$lib/data';
 	import { buildZapDetail } from '$lib/zap';
 
 	const detail = $derived(buildZapDetail(explorer.zapIndex));
+	const fixture = $derived(SAMPLE_ZAPS[explorer.zapIndex] ?? SAMPLE_ZAPS[0]);
 </script>
 
 <main style="max-width:1080px;margin:0 auto;padding:26px 24px 90px">
@@ -40,15 +42,19 @@
 				<span style="font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--violet)"
 					>KIND 9736 · BOLT12 ZAP</span
 				>
+				<span
+					style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--text2);background:var(--elev);border:1px solid var(--border);padding:2px 8px;border-radius:6px"
+					>CONCEPT FIXTURE</span
+				>
 				{#if detail.structurallyValid}
 					<span
-						style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-line);padding:2px 8px;border-radius:6px"
-						>STRUCTURE OK</span
+						style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--text2);background:var(--panel2);border:1px solid var(--border);padding:2px 8px;border-radius:6px"
+						>SHAPE OK</span
 					>
 				{:else}
 					<span
-						style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--amber);background:var(--amber-soft);padding:2px 8px;border-radius:6px"
-						>INCOMPLETE</span
+						style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber);padding:2px 8px;border-radius:6px"
+						>SHAPE INCOMPLETE</span
 					>
 				{/if}
 			</div>
@@ -144,11 +150,13 @@
 		style="margin-top:18px;border:1px solid var(--border);border-radius:10px;background:var(--panel);overflow:hidden"
 	>
 		<div style="padding:15px 18px;border-bottom:1px solid var(--border)">
-			<h2 style="margin:0;font-size:14.5px;font-weight:600">NIP-102 validation</h2>
+			<h2 style="margin:0;font-size:14.5px;font-weight:600">NIP-102 shape checklist</h2>
 			<p style="margin:6px 0 0;font-size:12px;color:var(--text2);line-height:1.45">
-				Structural checks for the concept fixture. Full cryptographic verification of the
+				Shape checks only for the offline concept fixture — not cryptographic verification.
+				The sample
 				<span style="font-family:'JetBrains Mono';font-size:11px">lnp</span>
-				payer proof is available via the Proof explorer (preimage · invoice sig · payer sig · Merkle).
+				may not match this row's amount / payer note; open the Proof explorer for real preimage ·
+				invoice sig · payer sig · Merkle checks.
 			</p>
 		</div>
 		<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
@@ -158,14 +166,14 @@
 				>
 					{#if v.pass}
 						<span
-							style="flex-shrink:0;width:24px;height:24px;border-radius:7px;background:var(--green-soft);border:1px solid var(--green-line);display:grid;place-items:center"
+							style="flex-shrink:0;width:24px;height:24px;border-radius:7px;background:var(--elev);border:1px solid var(--border);display:grid;place-items:center"
 						>
 							<svg
 								width="13"
 								height="13"
 								viewBox="0 0 24 24"
 								fill="none"
-								stroke="var(--green)"
+								stroke="var(--text2)"
 								stroke-width="3"
 								stroke-linecap="round"
 								stroke-linejoin="round"><path d="m5 13 4 4L19 7" /></svg
@@ -173,14 +181,14 @@
 						</span>
 					{:else}
 						<span
-							style="flex-shrink:0;width:24px;height:24px;border-radius:7px;background:var(--red-soft);border:1px solid var(--red);display:grid;place-items:center"
+							style="flex-shrink:0;width:24px;height:24px;border-radius:7px;background:var(--amber-soft);border:1px solid var(--amber);display:grid;place-items:center"
 						>
 							<svg
 								width="13"
 								height="13"
 								viewBox="0 0 24 24"
 								fill="none"
-								stroke="var(--red)"
+								stroke="var(--amber)"
 								stroke-width="3"
 								stroke-linecap="round"
 								stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg
@@ -239,10 +247,10 @@
 
 	<div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
 		<button
-			onclick={() => loadSample('proof')}
+			onclick={() => openProof(fixture.proof)}
 			style="display:flex;align-items:center;gap:8px;background:var(--violet);color:#fff;border:none;border-radius:9px;padding:11px 18px;font-weight:600;font-size:13.5px;cursor:pointer;font-family:'Space Grotesk'"
 		>
-			Inspect the lnp payer proof
+			Inspect the sample lnp proof
 			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
 				><path d="M5 12h14M13 6l6 6-6 6" /></svg
 			>
