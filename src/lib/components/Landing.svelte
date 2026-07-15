@@ -131,13 +131,13 @@
 				style="display:inline-flex;align-self:flex-start;align-items:center;gap:6px;padding:4px 9px;border-radius:7px;background:var(--violet-soft);color:var(--violet);font-size:11px;font-weight:700;letter-spacing:.04em"
 				>⚡ BOLT12 ZAPS</span
 			>
-			<span style="font-weight:600;font-size:15px">Concept NIP-102 zap feed</span>
+			<span style="font-weight:600;font-size:15px">Live NIP-102 zap feed</span>
 			<span style="font-size:13px;color:var(--text2);line-height:1.5"
-				>Offline fixtures for <span style="font-family:'JetBrains Mono';font-size:12px">kind 9736</span>
-				— no relay WebSockets; shape + binding explained.</span
+				>Query public relays for <span style="font-family:'JetBrains Mono';font-size:12px">kind 9736</span>
+				BOLT12 zaps — validate shape + lnp binding in-browser.</span
 			>
 			<span style="font-family:'JetBrains Mono';font-size:11px;color:var(--muted);margin-top:2px"
-				>NIP-102 · offline</span
+				>NIP-102 · live relays</span
 			>
 		</button>
 	</div>

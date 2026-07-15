@@ -5,13 +5,13 @@
  * `lnproof.space/<string>`. The decode itself happens in `applyUrl`, called by
  * the route's effect whenever the path param changes.
  *
- * Zap feed / detail use reserved paths `/zaps` and `/zaps/<index>` so they
- * stay shareable without colliding with BOLT12 bech32 strings. Live relay
- * fetch is intentionally out of scope — no WebSocket phone-home by default.
+ * Zap feed / detail use reserved paths `/zaps` and `/zaps-<eventId>` so they
+ * stay shareable without colliding with BOLT12 bech32 strings. Opening the
+ * zap screens fetches kind 9736 events from configured Nostr relays.
  */
 import { goto } from '$app/navigation';
 import type { Screen, Theme } from './data';
-import { SAMPLES, SAMPLE_ZAPS } from './data';
+import { SAMPLES } from './data';
 import { decodeInput, type DecodeView } from './decode';
 
 const THEME_KEY = 'lnproof-theme';
@@ -32,8 +32,8 @@ interface ExplorerState {
 	showTlv: boolean;
 	copied: string;
 	view: DecodeView | null;
-	/** Index into SAMPLE_ZAPS when screen is `zapDetail`. */
-	zapIndex: number;
+	/** Event id (64 hex) when screen is `zapDetail`. */
+	zapId: string;
 }
 
 export const explorer: ExplorerState = $state({
@@ -44,7 +44,7 @@ export const explorer: ExplorerState = $state({
 	showTlv: false,
 	copied: '',
 	view: null,
-	zapIndex: 0
+	zapId: ''
 });
 
 let verifyTimer: ReturnType<typeof setInterval> | null = null;
@@ -66,7 +66,7 @@ function show(view: DecodeView): void {
  * the URL, which keeps the address bar, deep links and back/forward in sync.
  *
  * BOLT12 bech32 payloads are percent-encoded (they can contain `/`). Reserved
- * app paths (`zaps`, `zaps-<n>`) are left as plain path segments.
+ * app paths (`zaps`, `zaps-<eventId>`) are left as plain path segments.
  */
 function navigate(code: string): void {
 	if (!code) {
@@ -74,7 +74,7 @@ function navigate(code: string): void {
 		return;
 	}
 	// Reserved app routes: plain path segments (no encode of separators).
-	if (code === 'zaps' || /^zaps-\d+$/.test(code)) {
+	if (code === 'zaps' || /^zaps-[0-9a-fA-F]{64}$/.test(code)) {
 		void goto('/' + code, { keepFocus: true, noScroll: true });
 		return;
 	}
@@ -85,16 +85,16 @@ export function goHome(): void {
 	navigate('');
 }
 
-/** Open the NIP-102 BOLT12 zap feed (concept fixtures). */
+/** Open the NIP-102 BOLT12 zap feed (live relay query). */
 export function goZaps(): void {
 	navigate('zaps');
 }
 
-/** Open a single zap detail from the feed. */
-export function openZap(index: number): void {
-	const i = Math.max(0, Math.min(index, SAMPLE_ZAPS.length - 1));
-	// Single path segment (`zaps-0`) so optional `[[code]]` matches on refresh.
-	navigate(`zaps-${i}`);
+/** Open a single zap detail from the feed (by event id). */
+export function openZap(eventId: string): void {
+	const id = eventId.trim().toLowerCase();
+	if (!/^[0-9a-f]{64}$/.test(id)) return;
+	navigate(`zaps-${id}`);
 }
 
 /** Decode whatever is currently in the search box. */
@@ -110,7 +110,7 @@ export function loadSample(kind: 'proof' | 'offer' | 'invoice'): void {
 	navigate(SAMPLES[kind]);
 }
 
-/** Navigate to a raw BOLT12 string (e.g. the proof pinned on a zap fixture). */
+/** Navigate to a raw BOLT12 string (e.g. the proof pinned on a zap). */
 export function openProof(raw: string): void {
 	const q = raw.trim();
 	if (!q) return;
@@ -123,8 +123,8 @@ export function openProof(raw: string): void {
  * screen/view from a navigation, so deep links and back/forward Just Work.
  *
  * Reserved paths:
- *   - `zaps`       → zap feed
- *   - `zaps/<n>`   → zap detail for SAMPLE_ZAPS[n]
+ *   - `zaps`              → zap feed
+ *   - `zaps-<eventId>`    → zap detail for that kind-9736 event
  */
 export function applyUrl(code: string): void {
 	const raw = code.trim();
@@ -136,29 +136,25 @@ export function applyUrl(code: string): void {
 			explorer.view = null;
 			explorer.query = '';
 			explorer.verifyStep = 0;
-			explorer.zapIndex = 0;
+			explorer.zapId = '';
 		}
 		return;
 	}
 
 	// Reserved zap routes (not BOLT12 bech32).
-	// Accept both `zaps-0` (canonical) and legacy `zaps/0` if the param was decoded.
 	if (raw === 'zaps') {
 		stopTimers();
 		explorer.screen = 'zaps';
 		explorer.view = null;
 		explorer.query = '';
 		explorer.verifyStep = 0;
+		explorer.zapId = '';
 		return;
 	}
-	const zapDetail = /^zaps[-/](\d+)$/.exec(raw);
+	const zapDetail = /^zaps[-/]([0-9a-fA-F]{64})$/.exec(raw);
 	if (zapDetail) {
-		const idx = Number(zapDetail[1]);
-		const clamped = Number.isFinite(idx)
-			? Math.max(0, Math.min(idx, SAMPLE_ZAPS.length - 1))
-			: 0;
 		stopTimers();
-		explorer.zapIndex = clamped;
+		explorer.zapId = zapDetail[1]!.toLowerCase();
 		explorer.screen = 'zapDetail';
 		explorer.view = null;
 		explorer.query = '';
