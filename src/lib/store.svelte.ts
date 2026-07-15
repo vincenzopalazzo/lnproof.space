@@ -64,10 +64,21 @@ function show(view: DecodeView): void {
  * `lnproof.space/<string>`. The decode itself happens in `applyUrl`, called by
  * the route's effect whenever the path param changes — these helpers only steer
  * the URL, which keeps the address bar, deep links and back/forward in sync.
+ *
+ * BOLT12 bech32 payloads are percent-encoded (they can contain `/`). Reserved
+ * app paths (`zaps`, `zaps-<n>`) are left as plain path segments.
  */
 function navigate(code: string): void {
-	const path = code ? '/' + encodeURIComponent(code) : '/';
-	void goto(path, { keepFocus: true, noScroll: true });
+	if (!code) {
+		void goto('/', { keepFocus: true, noScroll: true });
+		return;
+	}
+	// Reserved app routes: plain path segments (no encode of separators).
+	if (code === 'zaps' || /^zaps-\d+$/.test(code)) {
+		void goto('/' + code, { keepFocus: true, noScroll: true });
+		return;
+	}
+	void goto('/' + encodeURIComponent(code), { keepFocus: true, noScroll: true });
 }
 
 export function goHome(): void {
@@ -82,7 +93,8 @@ export function goZaps(): void {
 /** Open a single zap detail from the feed. */
 export function openZap(index: number): void {
 	const i = Math.max(0, Math.min(index, SAMPLE_ZAPS.length - 1));
-	navigate(`zaps/${i}`);
+	// Single path segment (`zaps-0`) so optional `[[code]]` matches on refresh.
+	navigate(`zaps-${i}`);
 }
 
 /** Decode whatever is currently in the search box. */
@@ -96,6 +108,13 @@ export function onSubmit(): void {
 export function loadSample(kind: 'proof' | 'offer' | 'invoice'): void {
 	explorer.query = SAMPLES[kind];
 	navigate(SAMPLES[kind]);
+}
+
+/** Navigate to a raw BOLT12 string (e.g. the proof pinned on a zap fixture). */
+export function openProof(raw: string): void {
+	const q = raw.trim();
+	if (!q) return;
+	navigate(q);
 }
 
 /**
@@ -123,6 +142,7 @@ export function applyUrl(code: string): void {
 	}
 
 	// Reserved zap routes (not BOLT12 bech32).
+	// Accept both `zaps-0` (canonical) and legacy `zaps/0` if the param was decoded.
 	if (raw === 'zaps') {
 		stopTimers();
 		explorer.screen = 'zaps';
@@ -131,7 +151,7 @@ export function applyUrl(code: string): void {
 		explorer.verifyStep = 0;
 		return;
 	}
-	const zapDetail = /^zaps\/(\d+)$/.exec(raw);
+	const zapDetail = /^zaps[-/](\d+)$/.exec(raw);
 	if (zapDetail) {
 		const idx = Number(zapDetail[1]);
 		const clamped = Number.isFinite(idx)

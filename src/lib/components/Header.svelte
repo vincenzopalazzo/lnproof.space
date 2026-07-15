@@ -1,10 +1,23 @@
 <script lang="ts">
-	import { explorer, goHome, goZaps, onQuery, onSubmit, toggleTheme } from '$lib/store.svelte';
+	import {
+		explorer,
+		copyShareLink,
+		goHome,
+		goZaps,
+		onQuery,
+		onSubmit,
+		toggleTheme
+	} from '$lib/store.svelte';
 
 	let { notLanding = false } = $props();
 
-	const zapsActive = $derived(
-		explorer.screen === 'zaps' || explorer.screen === 'zapDetail'
+	const zapsActive = $derived(explorer.screen === 'zaps' || explorer.screen === 'zapDetail');
+	const showShare = $derived(
+		explorer.screen === 'proof' ||
+			explorer.screen === 'offer' ||
+			explorer.screen === 'invoice' ||
+			explorer.screen === 'zapDetail' ||
+			explorer.screen === 'zaps'
 	);
 </script>
 
@@ -66,6 +79,34 @@
 			><path d="M13 2 4 14h6l-1 8 9-12h-6z" /></svg
 		>Zaps
 	</button>
+
+	{#if showShare}
+		<button
+			onclick={copyShareLink}
+			title="Copy a shareable link to this page"
+			style="display:flex;align-items:center;gap:7px;padding:6px 11px;border:1px solid {explorer.copied ===
+			'share'
+				? 'var(--green-line)'
+				: 'var(--border)'};border-radius:9px;background:var(--panel);font-size:12px;color:{explorer.copied ===
+			'share'
+				? 'var(--green)'
+				: 'var(--text2)'};font-weight:500;cursor:pointer;font-family:'Space Grotesk';transition:.16s"
+		>
+			{#if explorer.copied === 'share'}
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+					><path d="M20 6 9 17l-5-5" /></svg
+				>
+				Copied
+			{:else}
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+					><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1" /><path
+						d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"
+					/></svg
+				>
+				Copy link
+			{/if}
+		</button>
+	{/if}
 
 	<div
 		style="display:flex;align-items:center;gap:6px;padding:6px 11px;border:1px solid var(--border);border-radius:9px;background:var(--panel);font-size:12px;color:var(--text2);font-weight:500"
