@@ -34,9 +34,6 @@ interface ExplorerState {
 	view: DecodeView | null;
 	/** Index into SAMPLE_ZAPS when screen is `zapDetail`. */
 	zapIndex: number;
-	/** Ephemeral toast message (empty = hidden). */
-	toast: string;
-	toastKind: 'ok' | 'err';
 }
 
 export const explorer: ExplorerState = $state({
@@ -47,14 +44,11 @@ export const explorer: ExplorerState = $state({
 	showTlv: false,
 	copied: '',
 	view: null,
-	zapIndex: 0,
-	toast: '',
-	toastKind: 'ok'
+	zapIndex: 0
 });
 
 let verifyTimer: ReturnType<typeof setInterval> | null = null;
 let copyTimer: ReturnType<typeof setTimeout> | null = null;
-let toastTimer: ReturnType<typeof setTimeout> | null = null;
 
 /** Apply a decoded view: switch to the matching screen, animate proofs. */
 function show(view: DecodeView): void {
@@ -204,16 +198,6 @@ export function setCopied(key: string): void {
 	}, 1400);
 }
 
-/** Brief toast (bottom of viewport). Auto-clears after ~1.9s. */
-export function showToast(msg: string, kind: 'ok' | 'err' = 'ok'): void {
-	explorer.toast = msg;
-	explorer.toastKind = kind;
-	if (toastTimer) clearTimeout(toastTimer);
-	toastTimer = setTimeout(() => {
-		explorer.toast = '';
-	}, 1900);
-}
-
 export function stopTimers(): void {
 	if (verifyTimer) {
 		clearInterval(verifyTimer);
@@ -222,9 +206,5 @@ export function stopTimers(): void {
 	if (copyTimer) {
 		clearTimeout(copyTimer);
 		copyTimer = null;
-	}
-	if (toastTimer) {
-		clearTimeout(toastTimer);
-		toastTimer = null;
 	}
 }

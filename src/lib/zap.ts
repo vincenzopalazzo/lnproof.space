@@ -177,9 +177,9 @@ export function buildZapStats(zaps: SampleZap[] = SAMPLE_ZAPS): ZapStat[] {
 		counted += 1;
 	}
 	return [
-		{ k: 'Verified zaps', v: String(counted), color: 'var(--text)' },
-		{ k: 'Total zapped', v: fmt(total) + ' sats', color: 'var(--violet)' },
-		{ k: 'Relays seen', v: String(SAMPLE_RELAYS.length), color: 'var(--text)' },
+		{ k: 'Sample zaps', v: String(counted), color: 'var(--text)' },
+		{ k: 'Total (sample)', v: fmt(total) + ' sats', color: 'var(--violet)' },
+		{ k: 'Relays listed', v: String(SAMPLE_RELAYS.length), color: 'var(--text)' },
 		{ k: 'Spec', v: 'NIP-102', color: 'var(--text2)' }
 	];
 }
