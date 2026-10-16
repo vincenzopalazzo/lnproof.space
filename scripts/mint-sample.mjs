@@ -44,6 +44,7 @@ const paymentHash = sha256(preimage);
 const nodeId = schnorr.getPublicKey(nodeSecret); // 32-byte x-only
 const payerId = schnorr.getPublicKey(payerSecret); // 32-byte x-only
 
+const u32be = (n) => new Uint8Array([(n >>> 24) & 0xff, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff]);
 const u64be = (n) => {
 	const b = new Uint8Array(8);
 	let v = BigInt(n);
@@ -59,13 +60,53 @@ const metadata = new Uint8Array(16).fill(0xab);
 const createdAt = 1781768000; // 2026-06-18 ~ UTC
 const amountMsat = 50_000_000;
 
+// ---- a structurally valid 2-hop blinded path (BOLT4 blinded_path) -----------
+// The "points" are deterministic stand-ins with valid compressed prefixes, NOT
+// real curve points, and the encrypted blobs are opaque filler — an explorer
+// can only ever show a blinded path's structure, never decrypt it. What this
+// guarantees is wire-format validity: bolt12-utils' offer validator and this
+// repo's own parser (src/lib/blinded-path.ts) both accept it.
+const standInPoint = (prefix, fill) => {
+	const p = new Uint8Array(33);
+	p[0] = prefix;
+	p.fill(fill, 1);
+	return p;
+};
+const introNode = standInPoint(0x02, 0x31); // introduction point
+const firstPathKey = standInPoint(0x03, 0x32);
+const blindedHop1 = standInPoint(0x02, 0x33);
+const blindedHop2 = standInPoint(0x03, 0x34); // final hop = recipient
+const encBlob = (fill, len) => new Uint8Array(len).fill(fill);
+const blindedHop = (nodeId, payload) => concat(nodeId, new Uint8Array([(payload.length >> 8) & 0xff, payload.length & 0xff]), payload);
+const blindedPath = concat(
+	introNode,
+	firstPathKey,
+	new Uint8Array([2]), // num_hops
+	blindedHop(blindedHop1, encBlob(0x41, 16)),
+	blindedHop(blindedHop2, encBlob(0x42, 24))
+);
+
+// BOLT12 blinded_payinfo: u32 fee_base_msat, u32 fee_proportional_millionths,
+// u16 cltv_expiry_delta, u64 htlc_minimum_msat, u64 htlc_maximum_msat, u16 flen, features.
+const blindedPayinfo = concat(
+	u32be(1000), // 1000 msat base fee
+	u32be(100), // 100 ppm
+	new Uint8Array([0x00, 144]), // cltv delta 144
+	u64be(1000), // htlc min 1000 msat
+	u64be(amountMsat), // htlc max = the invoice amount
+	new Uint8Array([0x00, 0x00]) // no features
+);
+
 const nonSig = [
 	tlv(0, metadata), // invreq_metadata
 	tlv(10, enc.encode('Support BOLT12 development')), // offer_description
+	tlv(16, blindedPath), // offer_paths — reflected into the invoice, revealed in the proof
 	tlv(18, enc.encode('vincenzopalazzo')), // offer_issuer
 	tlv(22, nodeId), // offer_issuer_id
 	tlv(82, tu(u64be(amountMsat))), // invreq_amount
 	tlv(88, payerId), // invreq_payer_id
+	tlv(160, blindedPath), // invoice_paths — the payer pays along this blinded route
+	tlv(162, blindedPayinfo), // invoice_blindedpay — one payinfo per path, in order
 	tlv(164, tu(u64be(createdAt))), // invoice_created_at
 	tlv(168, paymentHash), // invoice_payment_hash
 	tlv(170, tu(u64be(amountMsat))), // invoice_amount
@@ -92,7 +133,7 @@ const result = createPayerProof({
 	invoiceHex,
 	preimageHex: toHex(preimage),
 	payerSecretKeyHex: toHex(payerSecret),
-	includedTlvTypes: [10, 18, 82, 164, 170], // reveal description/issuer/amount/created_at
+	includedTlvTypes: [10, 16, 18, 82, 160, 162, 164, 170], // reveal description/issuer/paths/payinfo/amount/created_at
 	note: 'Thanks for your work on Core Lightning!'
 });
 
@@ -109,6 +150,7 @@ const invoiceBech32 = encodeBolt12('lni', invoiceBytes);
 const nodeIdCompressed = secp256k1.getPublicKey(nodeSecret, true); // 33-byte compressed
 const offerRecords = [
 	tlv(10, enc.encode('Support BOLT12 development')), // offer_description
+	tlv(16, blindedPath), // offer_paths — how a payer reaches the issuer
 	tlv(18, enc.encode('vincenzopalazzo')), // offer_issuer
 	tlv(22, nodeIdCompressed) // offer_issuer_id (33-byte point)
 ];
@@ -120,6 +162,24 @@ try {
 } catch (e) {
 	offerBech32 = 'OFFER_ERR: ' + e.message;
 }
+
+// The embedded samples must round-trip through the explorer's own path parser,
+// or the landing-page demos would render a parse error instead of the paths.
+const { parseBlindedPaths, parseBlindedPayinfos } = await import('../src/lib/blinded-path.ts');
+for (const [label, bytes] of [
+	['offer_paths', blindedPath],
+	['invoice_paths', blindedPath]
+]) {
+	const r = parseBlindedPaths(bytes);
+	if (r.error || r.value.length !== 1 || r.value[0].hops.length !== 2) {
+		throw new Error(`minted ${label} does not round-trip: ${r.error ?? JSON.stringify(r.value.length)}`);
+	}
+}
+const pay = parseBlindedPayinfos(blindedPayinfo);
+if (pay.error || pay.value.length !== 1 || pay.value[0].cltvExpiryDelta !== 144) {
+	throw new Error(`minted blinded_payinfo does not round-trip: ${pay.error ?? 'bad fields'}`);
+}
+console.log('PATHS_ROUNDTRIP=ok');
 
 // Print the sample strings + crypto facts FIRST (these are what we embed).
 console.log('PROOF_BECH32=' + result.proofBech32);

@@ -2,6 +2,7 @@
 	import { explorer, goHome } from '$lib/store.svelte';
 	import { fmt } from '$lib/format';
 	import type { InvoiceView } from '$lib/decode';
+	import BlindedPaths from './BlindedPaths.svelte';
 
 	const view = $derived(explorer.view as InvoiceView);
 </script>
@@ -81,4 +82,24 @@
 			{/each}
 		</div>
 	</section>
+
+	{#if view.paths.length || view.pathsError}
+		<BlindedPaths
+			paths={view.paths}
+			error={view.pathsError}
+			title="Blinded payment paths"
+			purpose="invoice_paths — the payer routes the HTLC along one of these. Each path's payinfo states the fees, CLTV delta and HTLC bounds the recipient demands."
+			accent="amber"
+		/>
+	{/if}
+
+	{#if view.offerPaths.length || view.offerPathsError}
+		<BlindedPaths
+			paths={view.offerPaths}
+			error={view.offerPathsError}
+			title="Offer reply paths"
+			purpose="offer_paths reflected inside the invoice — the onion-message routes back to the offer issuer, not payment routes."
+			accent="violet"
+		/>
+	{/if}
 </main>
