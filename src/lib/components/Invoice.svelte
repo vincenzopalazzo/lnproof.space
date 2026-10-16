@@ -3,6 +3,7 @@
 	import { fmt } from '$lib/format';
 	import type { InvoiceView } from '$lib/decode';
 	import BlindedPaths from './BlindedPaths.svelte';
+	import PrivacyScore from './PrivacyScore.svelte';
 
 	const view = $derived(explorer.view as InvoiceView);
 </script>
@@ -60,8 +61,10 @@
 		</div>
 	</div>
 
+	<PrivacyScore score={view.privacy} />
+
 	<section
-		style="border:1px solid var(--border);border-radius:10px;background:var(--panel);overflow:hidden"
+		style="border:1px solid var(--border);border-radius:10px;background:var(--panel);overflow:hidden;margin-top:18px"
 	>
 		<div style="padding:16px 18px;border-bottom:1px solid var(--border)">
 			<h2 style="margin:0;font-size:14.5px;font-weight:600">Decoded fields</h2>
