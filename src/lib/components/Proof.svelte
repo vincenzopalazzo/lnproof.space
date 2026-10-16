@@ -4,6 +4,7 @@
 	import { fmt, copyText, buildChecks } from '$lib/format';
 	import type { ProofView } from '$lib/decode';
 	import BlindedPaths from './BlindedPaths.svelte';
+	import PrivacyScore from './PrivacyScore.svelte';
 
 	// +page only renders this when the active view is a proof.
 	const view = $derived(explorer.view as ProofView);
@@ -269,6 +270,8 @@
 			</div>
 		</section>
 	</div>
+
+	<PrivacyScore score={view.privacy} />
 
 	<!-- decoded fields -->
 	<section

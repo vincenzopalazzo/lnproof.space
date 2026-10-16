@@ -24,6 +24,7 @@ import {
 import { sha256 } from '@noble/hashes/sha2';
 import { fmt, short, toHex, mk, type Field, type CheckResult, type DisclosureRow, type TlvRow } from './format';
 import { parseBlindedPaths, parseBlindedPayinfos, type BlindedPathView } from './blinded-path';
+import { scorePrivacy, type PrivacyScore } from './privacy';
 
 // ---- view-models ------------------------------------------------------------
 
@@ -66,6 +67,7 @@ export interface ProofView {
 	pathsError?: string;
 	offerPaths: BlindedPathView[];
 	offerPathsError?: string;
+	privacy: PrivacyScore;
 }
 
 export interface OfferView {
@@ -79,6 +81,7 @@ export interface OfferView {
 	paths: BlindedPathView[];
 	/** Set when offer_paths was present but could not be fully parsed. */
 	pathsError?: string;
+	privacy: PrivacyScore;
 }
 
 export interface InvoiceView {
@@ -101,6 +104,7 @@ export interface InvoiceView {
 	 */
 	offerPaths: BlindedPathView[];
 	offerPathsError?: string;
+	privacy: PrivacyScore;
 }
 
 export interface ErrorView {
@@ -319,7 +323,22 @@ function decodeProofView(raw: string): ProofView {
 		paths,
 		pathsError,
 		offerPaths: parsedOfferPaths?.value ?? [],
-		offerPathsError: parsedOfferPaths?.error
+		offerPathsError: parsedOfferPaths?.error,
+		privacy: scorePrivacy({
+			kind: 'proof',
+			issuerName: inv.offer_issuer,
+			issuerId: toHex(inv.offer_issuer_id) || undefined,
+			offerMetadata: recordValue(4n) !== undefined,
+			offerPaths: parsedOfferPaths?.error ? [] : parsedOfferPaths?.value ?? [],
+			paymentPaths: pathsError ? [] : paths,
+			offerPathsUnreadable: parsedOfferPaths?.error !== undefined,
+			paymentPathsUnreadable: pathsError !== undefined,
+			payerId: payerKey || undefined,
+			payerMetadata: recordValue(0n) !== undefined,
+			payerMetadataText: textOrUndefined(recordValue(0n)),
+			payerNote: proof.proofNote || undefined,
+			withheldCount: proof.omittedTlvs.length
+		})
 	};
 }
 
@@ -356,7 +375,17 @@ function decodeOfferView(raw: string): OfferView {
 		amount,
 		fields,
 		paths: parsedPaths?.value ?? [],
-		pathsError: parsedPaths?.error
+		pathsError: parsedPaths?.error,
+		privacy: scorePrivacy({
+			kind: 'offer',
+			issuerName: o.issuer,
+			issuerId: node || undefined,
+			offerMetadata: o.records.some((r) => r.type === 4n),
+			offerPaths: parsedPaths?.error ? [] : parsedPaths?.value ?? [],
+			paymentPaths: [],
+			payerMetadata: false,
+			offerPathsUnreadable: parsedPaths?.error !== undefined
+		})
 	};
 }
 
@@ -405,8 +434,32 @@ function decodeInvoiceView(raw: string): InvoiceView {
 		paths,
 		pathsError,
 		offerPaths: parsedOfferPaths?.value ?? [],
-		offerPathsError: parsedOfferPaths?.error
+		offerPathsError: parsedOfferPaths?.error,
+		privacy: scorePrivacy({
+			kind: 'invoice',
+			issuerName: f.offer_issuer,
+			issuerId: toHex(f.offer_issuer_id) || undefined,
+			offerMetadata: f.offer_metadata !== undefined,
+			offerPaths: parsedOfferPaths?.error ? [] : parsedOfferPaths?.value ?? [],
+			paymentPaths: pathsError ? [] : paths,
+			offerPathsUnreadable: parsedOfferPaths?.error !== undefined,
+			paymentPathsUnreadable: pathsError !== undefined,
+			payerId: toHex(f.invreq_payer_id) || undefined,
+			payerMetadata: f.invreq_metadata !== undefined,
+			payerMetadataText: textOrUndefined(f.invreq_metadata),
+			payerNote: f.invreq_payer_note
+		})
 	};
+}
+
+/** Metadata is only a leak when it is readable. Invalid UTF-8 stays opaque. */
+function textOrUndefined(bytes: Uint8Array | undefined): string | undefined {
+	if (!bytes) return undefined;
+	try {
+		return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+	} catch {
+		return undefined;
+	}
 }
 
 /**
