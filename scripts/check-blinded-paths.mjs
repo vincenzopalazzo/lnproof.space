@@ -5,7 +5,9 @@
  * style is unavailable, so instead it shells the same assertions through the
  * TypeScript the app ships by transpiling on the fly with node --experimental-strip-types.
  *
- * Run: node scripts/check-blinded-paths.mjs
+ * Run: node --experimental-strip-types scripts/check-blinded-paths.mjs
+ * (the script imports src/lib/blinded-path.ts directly; Node's type stripping
+ * is stable and default-on since Node 22.6, which this repo requires).
  */
 import { parseBlindedPaths, parseBlindedPayinfos } from '../src/lib/blinded-path.ts';
 
@@ -19,7 +21,6 @@ const check = (name, cond, detail = '') => {
 	}
 };
 
-const hex = (s) => Uint8Array.from(s.match(/../g).map((b) => parseInt(b, 16)));
 const u16 = (n) => new Uint8Array([(n >> 8) & 0xff, n & 0xff]);
 const u32 = (n) => new Uint8Array([(n >>> 24) & 0xff, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff]);
 const u64 = (n) => {
@@ -141,4 +142,6 @@ const shortPay = parseBlindedPayinfos(payinfo.slice(0, 10));
 check('truncated payinfo does not throw and reports', !!shortPay.error && shortPay.value.length === 0, shortPay.error);
 
 console.log(failures === 0 ? '\nALL CHECKS PASSED' : `\n${failures} CHECK(S) FAILED`);
-process.exit(failures === 0 ? 0 : 1);
+// Set the code instead of process.exit(), which can discard buffered stdout
+// when output is piped or captured by CI.
+process.exitCode = failures === 0 ? 0 : 1;

@@ -16,12 +16,16 @@
 	const { paths, error, title, purpose, accent = 'violet' }: Props = $props();
 
 	let copied = $state('');
+	let copiedTimer: ReturnType<typeof setTimeout> | undefined;
 
 	async function copy(key: string, value: string) {
 		await copyText(value);
 		copied = key;
-		setTimeout(() => {
-			if (copied === key) copied = '';
+		// One timer for the whole component: a second copy must not be cleared
+		// by the timeout the first copy scheduled.
+		clearTimeout(copiedTimer);
+		copiedTimer = setTimeout(() => {
+			copied = '';
 		}, 1200);
 	}
 

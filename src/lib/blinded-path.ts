@@ -143,7 +143,7 @@ export function parseBlindedPaths(data: Uint8Array): ParseResult<BlindedPathView
 	return { value: paths };
 }
 
-/** One blinded_payinfo is a fixed 26-byte header plus `flen` feature bytes. */
+/** One blinded_payinfo is 28 bytes (the 26-byte fixed fields plus the u16 `flen`) plus `flen` feature bytes. */
 const PAYINFO_HEADER = 4 + 4 + 2 + 8 + 8 + 2;
 
 /**
@@ -176,6 +176,7 @@ export function parseBlindedPayinfos(data: Uint8Array): ParseResult<BlindedPayin
 		offset += flen;
 	}
 
-	if (payinfos.length === 0 && data.length > 0) return fail('unparsed payinfo bytes');
+	// An empty value cannot hold the one-entry-per-path array BOLT12 requires.
+	if (payinfos.length === 0) return fail('blinded_payinfo TLV is empty');
 	return { value: payinfos };
 }

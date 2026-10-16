@@ -61,21 +61,19 @@ const createdAt = 1781768000; // 2026-06-18 ~ UTC
 const amountMsat = 50_000_000;
 
 // ---- a structurally valid 2-hop blinded path (BOLT4 blinded_path) -----------
-// The "points" are deterministic stand-ins with valid compressed prefixes, NOT
-// real curve points, and the encrypted blobs are opaque filler — an explorer
-// can only ever show a blinded path's structure, never decrypt it. What this
-// guarantees is wire-format validity: bolt12-utils' offer validator and this
-// repo's own parser (src/lib/blinded-path.ts) both accept it.
-const standInPoint = (prefix, fill) => {
-	const p = new Uint8Array(33);
-	p[0] = prefix;
-	p.fill(fill, 1);
-	return p;
+// The node ids and path key are real compressed secp256k1 points derived from
+// fixed scalars, so strict BOLT4 readers accept them — not just prefix checks.
+// The encrypted blobs stay opaque filler: an explorer can only ever show a
+// blinded path's structure, never decrypt it.
+const pointFromScalar = (byte) => {
+	const scalar = new Uint8Array(32);
+	scalar[31] = byte;
+	return secp256k1.getPublicKey(scalar, true); // 33-byte compressed point
 };
-const introNode = standInPoint(0x02, 0x31); // introduction point
-const firstPathKey = standInPoint(0x03, 0x32);
-const blindedHop1 = standInPoint(0x02, 0x33);
-const blindedHop2 = standInPoint(0x03, 0x34); // final hop = recipient
+const introNode = pointFromScalar(0x31); // introduction point
+const firstPathKey = pointFromScalar(0x32);
+const blindedHop1 = pointFromScalar(0x33);
+const blindedHop2 = pointFromScalar(0x34); // final hop = recipient
 const encBlob = (fill, len) => new Uint8Array(len).fill(fill);
 const blindedHop = (nodeId, payload) => concat(nodeId, new Uint8Array([(payload.length >> 8) & 0xff, payload.length & 0xff]), payload);
 const blindedPath = concat(

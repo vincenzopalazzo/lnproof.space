@@ -269,7 +269,12 @@ function decodeProofView(raw: string): ProofView {
 	// the selective-disclosure panel already accounts for it as a hidden leaf.
 	const recordValue = (type: bigint): Uint8Array | undefined =>
 		decoded.records.find((r) => r.type === type)?.value;
-	const { paths, pathsError } = zipPaymentPaths(recordValue(160n), recordValue(162n));
+	// A proof reveals fields selectively, so a missing counterpart TLV means
+	// "not disclosed", not "malformed invoice" — only cross-check when both
+	// sides were actually revealed.
+	const { paths, pathsError } = zipPaymentPaths(recordValue(160n), recordValue(162n), {
+		requireBoth: false
+	});
 	const parsedOfferPaths = recordValue(16n) ? parseBlindedPaths(recordValue(16n)!) : undefined;
 
 	const checks: CheckResult[] = [
@@ -361,7 +366,9 @@ function decodeInvoiceView(raw: string): InvoiceView {
 
 	// invoice_paths (payment routes) zipped with invoice_blindedpay — BOLT12
 	// requires exactly one blinded_payinfo per path, in the same order.
-	const { paths, pathsError, parsedPaths } = zipPaymentPaths(f.invoice_paths, f.invoice_blindedpay);
+	const { paths, pathsError, parsedPaths } = zipPaymentPaths(f.invoice_paths, f.invoice_blindedpay, {
+		requireBoth: true
+	});
 
 	// The offer's reply paths are reflected verbatim inside the invoice.
 	const parsedOfferPaths = f.offer_paths ? parseBlindedPaths(f.offer_paths) : undefined;
@@ -394,10 +401,15 @@ function decodeInvoiceView(raw: string): InvoiceView {
  * Zip invoice_paths with invoice_blindedpay. BOLT12 requires exactly one
  * blinded_payinfo per path, in order; a count mismatch is reported, not fatal,
  * and whatever parsed is still shown.
+ *
+ * `requireBoth` is for complete invoices, where one side without the other is
+ * spec-invalid. Proofs reveal fields selectively, so a missing counterpart
+ * there means "not disclosed" and must not be flagged.
  */
 function zipPaymentPaths(
 	pathsBytes: Uint8Array | undefined,
-	payinfoBytes: Uint8Array | undefined
+	payinfoBytes: Uint8Array | undefined,
+	opts: { requireBoth: boolean }
 ): { paths: BlindedPathView[]; pathsError?: string; parsedPaths?: { value: BlindedPathView[]; error?: string } } {
 	const parsedPaths = pathsBytes ? parseBlindedPaths(pathsBytes) : undefined;
 	const parsedPay = payinfoBytes ? parseBlindedPayinfos(payinfoBytes) : undefined;
@@ -410,8 +422,10 @@ function zipPaymentPaths(
 		paths.forEach((p, i) => {
 			if (parsedPay.value[i]) p.payinfo = parsedPay.value[i];
 		});
-	} else if (parsedPay && !paths.length && !pathsError) {
-		pathsError = 'invoice_blindedpay present without invoice_paths';
+	} else if (!pathsError && opts.requireBoth && (parsedPay || paths.length)) {
+		pathsError = parsedPay
+			? 'invoice_blindedpay present without invoice_paths'
+			: `invoice_paths has ${paths.length} path(s) but invoice_blindedpay is missing — BOLT12 requires one blinded_payinfo per path`;
 	}
 	return { paths, pathsError, parsedPaths };
 }
