@@ -6,8 +6,9 @@
  * TypeScript the app ships by transpiling on the fly with node --experimental-strip-types.
  *
  * Run: node --experimental-strip-types scripts/check-blinded-paths.mjs
- * (the script imports src/lib/blinded-path.ts directly; Node's type stripping
- * is stable and default-on since Node 22.6, which this repo requires).
+ * The script imports src/lib/blinded-path.ts directly. Type stripping is still
+ * experimental and flag-gated in Node 22 (it became default-on in Node 24), so
+ * the flag stays explicit.
  */
 import { parseBlindedPaths, parseBlindedPayinfos } from '../src/lib/blinded-path.ts';
 
@@ -98,7 +99,11 @@ try {
 	threw = true;
 }
 check('truncated input does not throw', !threw);
-check('truncated input reports an error', !!truncResult?.error, truncResult?.error);
+check(
+	'truncated input names where parsing stopped',
+	truncResult?.error === 'path #1: truncated first_path_key',
+	truncResult?.error
+);
 
 const badPrefix = concat(new Uint8Array([0x05]), path.slice(1));
 const badResult = parseBlindedPaths(badPrefix);

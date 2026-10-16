@@ -94,6 +94,7 @@
 					>{id.label.toUpperCase()}</span
 				>
 				<button
+					type="button"
 					onclick={() => copy(`intro-${p.index}`, id.full)}
 					title={id.full}
 					style="background:none;border:none;padding:0;cursor:pointer;font-family:'JetBrains Mono';font-size:12.5px;color:var(--text)"
@@ -105,6 +106,7 @@
 					>FIRST PATH KEY</span
 				>
 				<button
+					type="button"
 					onclick={() => copy(`key-${p.index}`, p.firstPathKey)}
 					title={p.firstPathKey}
 					style="background:none;border:none;padding:0;cursor:pointer;font-family:'JetBrains Mono';font-size:12.5px;color:var(--text2)"
@@ -119,6 +121,7 @@
 						<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
 							<span style="font-size:11px;color:var(--muted);font-weight:600">HOP {i + 1}</span>
 							<button
+								type="button"
 								onclick={() => copy(`hop-${p.index}-${i}`, hop.blindedNodeId)}
 								title={hop.blindedNodeId}
 								style="background:none;border:none;padding:0;cursor:pointer;font-family:'JetBrains Mono';font-size:12.5px;color:var(--text)"
