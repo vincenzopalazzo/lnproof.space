@@ -6,6 +6,10 @@
  * decodes + verifies it to prove the embedded sample is genuine.
  *
  * Run: node scripts/mint-sample.mjs   — copy the printed lnp1 string into data.ts
+ *
+ * Plain node, no loader: the script stays dependency-free JS. The path
+ * round-trip below uses a small inline parser rather than importing
+ * src/lib/blinded-path.ts, which needs type stripping.
  */
 import { schnorr, secp256k1 } from '@noble/curves/secp256k1';
 import { sha256 } from '@noble/hashes/sha2';
@@ -161,22 +165,41 @@ try {
 	offerBech32 = 'OFFER_ERR: ' + e.message;
 }
 
-// The embedded samples must round-trip through the explorer's own path parser,
-// or the landing-page demos would render a parse error instead of the paths.
-const { parseBlindedPaths, parseBlindedPayinfos } = await import('../src/lib/blinded-path.ts');
-for (const [label, bytes] of [
-	['offer_paths', blindedPath],
-	['invoice_paths', blindedPath]
-]) {
-	const r = parseBlindedPaths(bytes);
-	if (r.error || r.value.length !== 1 || r.value[0].hops.length !== 2) {
-		throw new Error(`minted ${label} does not round-trip: ${r.error ?? JSON.stringify(r.value.length)}`);
+// The embedded samples must be wire-valid blinded paths, or the landing-page
+// demos render a parse error. Checked inline (no import of the TS parser —
+// this script runs under plain node) against the BOLT4 layout:
+// point(33) + point(33) + num_hops(1) + hops * (point(33) + u16 enclen + bytes).
+const assertBlindedPath = (label, bytes) => {
+	let o = 0;
+	const need = (n, what) => {
+		if (o + n > bytes.length) throw new Error(`minted ${label}: truncated ${what} at offset ${o}`);
+	};
+	const pointAt = (what) => {
+		need(33, what);
+		if (bytes[o] !== 0x02 && bytes[o] !== 0x03) throw new Error(`minted ${label}: bad ${what} prefix`);
+		o += 33;
+	};
+	pointAt('first_node_id');
+	pointAt('first_path_key');
+	need(1, 'num_hops');
+	const hops = bytes[o++];
+	if (hops !== 2) throw new Error(`minted ${label}: expected 2 hops, got ${hops}`);
+	for (let h = 0; h < hops; h++) {
+		pointAt(`hop ${h + 1} blinded_node_id`);
+		need(2, 'enclen');
+		const enclen = (bytes[o] << 8) | bytes[o + 1];
+		o += 2;
+		need(enclen, 'encrypted data');
+		o += enclen;
 	}
-}
-const pay = parseBlindedPayinfos(blindedPayinfo);
-if (pay.error || pay.value.length !== 1 || pay.value[0].cltvExpiryDelta !== 144) {
-	throw new Error(`minted blinded_payinfo does not round-trip: ${pay.error ?? 'bad fields'}`);
-}
+	if (o !== bytes.length) throw new Error(`minted ${label}: ${bytes.length - o} trailing bytes`);
+};
+assertBlindedPath('offer_paths', blindedPath);
+assertBlindedPath('invoice_paths', blindedPath);
+// blinded_payinfo: u32 + u32 + u16 cltv + u64 + u64 + u16 flen + features
+if (blindedPayinfo.length !== 28) throw new Error(`minted blinded_payinfo: expected 28 bytes, got ${blindedPayinfo.length}`);
+const mintedCltv = (blindedPayinfo[8] << 8) | blindedPayinfo[9];
+if (mintedCltv !== 144) throw new Error(`minted blinded_payinfo: cltv delta ${mintedCltv}, expected 144`);
 // Printed after the sample strings below — callers read the first stdout lines
 // positionally, so nothing may precede PROOF_BECH32.
 const roundtripStatus = 'PATHS_ROUNDTRIP=ok';
