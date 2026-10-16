@@ -115,14 +115,15 @@ const payinfo = concat(
 	u32(200), // fee_proportional_millionths
 	u16(144), // cltv_expiry_delta
 	u64(1000), // htlc_minimum_msat
-	u64('2100000000000000'), // htlc_maximum_msat — beyond 2^53, must survive as bigint
+	// 2^53 + 3, past Number.MAX_SAFE_INTEGER: a Number() round-trip would lose it.
+	u64('9007199254740995'), // htlc_maximum_msat
 	u16(2),
 	new Uint8Array([0x80, 0x00]) // features
 );
 const parsedPay = parseBlindedPayinfos(payinfo);
 check('payinfo parses', !parsedPay.error, parsedPay.error);
 check('payinfo fields', parsedPay.value[0]?.feeBaseMsat === 1000 && parsedPay.value[0]?.feeProportionalMillionths === 200 && parsedPay.value[0]?.cltvExpiryDelta === 144);
-check('htlc max keeps full u64 precision', parsedPay.value[0]?.htlcMaximumMsat === 2100000000000000n);
+check('htlc max keeps full u64 precision past 2^53', parsedPay.value[0]?.htlcMaximumMsat === 9007199254740995n);
 check('features hex', parsedPay.value[0]?.featuresHex === '8000');
 
 // two payinfos back to back, second with empty features

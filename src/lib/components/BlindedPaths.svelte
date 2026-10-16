@@ -45,10 +45,8 @@
 		const base = info.feeBaseMsat ? `${fmt(info.feeBaseMsat)} msat base` : 'no base fee';
 		const ppm = `${fmt(info.feeProportionalMillionths)} ppm`;
 		const min = `min ${info.htlcMinimumMsat.toLocaleString('en-US')} msat`;
-		const max =
-			info.htlcMaximumMsat === 0n
-				? 'no max'
-				: `max ${info.htlcMaximumMsat.toLocaleString('en-US')} msat`;
+		// Zero is a real decoded value, not an "unlimited" sentinel — render it as-is.
+		const max = `max ${info.htlcMaximumMsat.toLocaleString('en-US')} msat`;
 		return `${base} + ${ppm} · CLTV ${info.cltvExpiryDelta} · HTLC ${min}, ${max}`;
 	}
 </script>
