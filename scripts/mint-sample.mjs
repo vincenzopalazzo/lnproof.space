@@ -26,7 +26,8 @@ const {
 	extractGeneratedOfferFields,
 	decodeOffer,
 	decodeBolt12,
-	encodeBolt12
+	encodeBolt12,
+	parseTlvStream
 } = pkg;
 
 const enc = new TextEncoder();
@@ -196,6 +197,19 @@ const assertBlindedPath = (label, bytes) => {
 };
 assertBlindedPath('offer_paths', blindedPath);
 assertBlindedPath('invoice_paths', blindedPath);
+// Close the loop on the serialized artifacts, not the input buffer: pull the
+// path TLV back out of the encoded invoice and the decoded proof and require
+// it to be byte-identical to what was minted.
+const sameBytes = (a, b) => a && b && a.length === b.length && a.every((x, i) => x === b[i]);
+const fromInvoice = decodeBolt12(invoiceBech32);
+const invoicePaths = extractInvoiceFields(parseTlvStream(fromInvoice.data)).invoice_paths;
+if (!sameBytes(invoicePaths, blindedPath)) {
+	throw new Error('invoice_paths did not survive lni1 encode/decode byte-identical');
+}
+const proofPaths = decoded.records.find((r) => r.type === 160n)?.value;
+if (!sameBytes(proofPaths, blindedPath)) {
+	throw new Error('invoice_paths did not survive payer-proof encode/decode byte-identical');
+}
 // blinded_payinfo: u32 + u32 + u16 cltv + u64 + u64 + u16 flen + features
 if (blindedPayinfo.length !== 28) throw new Error(`minted blinded_payinfo: expected 28 bytes, got ${blindedPayinfo.length}`);
 const mintedCltv = (blindedPayinfo[8] << 8) | blindedPayinfo[9];
