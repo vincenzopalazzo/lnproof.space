@@ -415,7 +415,9 @@ function zipPaymentPaths(
 	const parsedPay = payinfoBytes ? parseBlindedPayinfos(payinfoBytes) : undefined;
 	let pathsError = parsedPaths?.error ?? parsedPay?.error;
 	const paths = parsedPaths?.value ?? [];
-	if (parsedPay && paths.length) {
+	if (parsedPay && parsedPaths) {
+		// Compare whenever both TLVs parsed, even if one side came back empty:
+		// zero paths against N payinfos is still a mismatch.
 		if (parsedPay.value.length !== paths.length && !pathsError) {
 			pathsError = `invoice_blindedpay has ${parsedPay.value.length} entr${parsedPay.value.length === 1 ? 'y' : 'ies'} for ${paths.length} path(s) — BOLT12 requires exactly one per path`;
 		}

@@ -177,7 +177,9 @@ const pay = parseBlindedPayinfos(blindedPayinfo);
 if (pay.error || pay.value.length !== 1 || pay.value[0].cltvExpiryDelta !== 144) {
 	throw new Error(`minted blinded_payinfo does not round-trip: ${pay.error ?? 'bad fields'}`);
 }
-console.log('PATHS_ROUNDTRIP=ok');
+// Printed after the sample strings below — callers read the first stdout lines
+// positionally, so nothing may precede PROOF_BECH32.
+const roundtripStatus = 'PATHS_ROUNDTRIP=ok';
 
 // Print the sample strings + crypto facts FIRST (these are what we embed).
 console.log('PROOF_BECH32=' + result.proofBech32);
@@ -191,6 +193,7 @@ console.log('NODE_ID=' + toHex(nodeId));
 console.log('PAYER_ID=' + toHex(payerId));
 console.log('PAYER_NOTE=' + decoded.proof.payerNote);
 console.log('PROOF_TLV_TYPES=' + decoded.records.map((r) => r.type).join(','));
+console.log(roundtripStatus);
 
 // Exploration: what the field extractor yields from the proof's records.
 try {
