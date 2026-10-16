@@ -424,12 +424,16 @@ function zipPaymentPaths(
 		paths.forEach((p, i) => {
 			if (parsedPay.value[i]) p.payinfo = parsedPay.value[i];
 		});
-	} else if (!pathsError && opts.requireBoth && ((pathsBytes && !payinfoBytes) || (payinfoBytes && !pathsBytes))) {
-		// Key off TLV presence, not parsed length: a present-but-empty
-		// invoice_paths parses to zero paths and would otherwise slip through.
-		pathsError = payinfoBytes
-			? 'invoice_blindedpay present without invoice_paths'
-			: `invoice_paths present but invoice_blindedpay is missing — BOLT12 requires one blinded_payinfo per path`;
+	} else if (!pathsError && opts.requireBoth && (!pathsBytes || !payinfoBytes)) {
+		// A complete invoice must carry both (BOLT12: a reader MUST reject an
+		// invoice whose invoice_paths or invoice_blindedpay is absent). Key off
+		// TLV presence, not parsed length.
+		pathsError = !pathsBytes
+			? 'invoice_paths missing — BOLT12 requires one or more blinded payment paths'
+			: 'invoice_blindedpay missing — BOLT12 requires one blinded_payinfo per path';
+	}
+	if (!pathsError && opts.requireBoth && paths.length === 0) {
+		pathsError = 'invoice_paths is empty — BOLT12 requires one or more blinded payment paths';
 	}
 	return { paths, pathsError, parsedPaths };
 }

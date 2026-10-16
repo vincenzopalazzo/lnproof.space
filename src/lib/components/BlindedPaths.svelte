@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onDestroy } from 'svelte';
 	import { short, copyText, fmt } from '$lib/format';
 	import type { BlindedPathView, BlindedPayinfoView } from '$lib/blinded-path';
 
@@ -17,13 +18,21 @@
 
 	let copied = $state('');
 	let copiedTimer: ReturnType<typeof setTimeout> | undefined;
+	// Bumped per click so a slow clipboard write resolving late cannot overwrite
+	// the status of a newer click.
+	let copySeq = 0;
+
+	onDestroy(() => clearTimeout(copiedTimer));
 
 	async function copy(key: string, value: string) {
-		await copyText(value);
-		copied = key;
-		// One timer for the whole component: a second copy must not be cleared
-		// by the timeout the first copy scheduled.
+		const seq = ++copySeq;
+		// Drop the previous confirmation immediately, before the await, so its
+		// timer cannot blank the status while this copy is still pending.
 		clearTimeout(copiedTimer);
+		copied = '';
+		await copyText(value);
+		if (seq !== copySeq) return; // a newer click superseded this one
+		copied = key;
 		copiedTimer = setTimeout(() => {
 			copied = '';
 		}, 1200);
