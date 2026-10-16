@@ -23,6 +23,7 @@ import {
 } from 'bolt12-utils';
 import { sha256 } from '@noble/hashes/sha2';
 import { fmt, short, toHex, mk, type Field, type CheckResult, type DisclosureRow, type TlvRow } from './format';
+import { parseBlindedPaths, parseBlindedPayinfos, type BlindedPathView } from './blinded-path';
 
 // ---- view-models ------------------------------------------------------------
 
@@ -56,6 +57,15 @@ export interface ProofView {
 	disclosure: DisclosureRow[];
 	revealedCount: number;
 	totalFields: number;
+	/**
+	 * Blinded paths the payer chose to reveal (offer_paths, invoice_paths with
+	 * its blinded_payinfo). Omitted path TLVs stay hidden — selective disclosure
+	 * applies to them like any other field.
+	 */
+	paths: BlindedPathView[];
+	pathsError?: string;
+	offerPaths: BlindedPathView[];
+	offerPathsError?: string;
 }
 
 export interface OfferView {
@@ -65,6 +75,10 @@ export interface OfferView {
 	issuer: string;
 	amount: string;
 	fields: Field[];
+	/** Decoded offer_paths (BOLT4 blinded paths used to reach the offer issuer). */
+	paths: BlindedPathView[];
+	/** Set when offer_paths was present but could not be fully parsed. */
+	pathsError?: string;
 }
 
 export interface InvoiceView {
@@ -74,6 +88,19 @@ export interface InvoiceView {
 	description: string;
 	issuer: string;
 	fields: Field[];
+	/**
+	 * Payment paths: invoice_paths, each zipped with its invoice_blindedpay
+	 * payinfo (BOLT12 requires exactly one per path, in order).
+	 */
+	paths: BlindedPathView[];
+	pathsError?: string;
+	/**
+	 * The offer's reply paths reflected inside the invoice (offer_paths).
+	 * These carry onion-message routing back to the offer issuer, not payment
+	 * constraints, so they render separately from `paths`.
+	 */
+	offerPaths: BlindedPathView[];
+	offerPathsError?: string;
 }
 
 export interface ErrorView {
@@ -101,6 +128,17 @@ function formatTimestamp(ts: bigint): string {
 	if (Number.isNaN(d.getTime())) return ts.toString();
 	const iso = d.toISOString(); // 2026-06-18T07:33:20.000Z
 	return iso.slice(0, 10) + ' ' + iso.slice(11, 19) + ' UTC';
+}
+
+/**
+ * Headline issuer. `offer_issuer` is optional — an offer identified only by
+ * `offer_issuer_id` (or an invoice only by its node id) must show that key,
+ * not "(unknown issuer)".
+ */
+function issuerDisplay(name: string | undefined, nodeIdHex: string | undefined): string {
+	if (name) return name;
+	if (nodeIdHex) return short(nodeIdHex, 10, 8);
+	return '(unknown issuer)';
 }
 
 function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
@@ -192,8 +230,8 @@ function decodeProofView(raw: string): ProofView {
 	const amountMsat = inv.invoice_amount ?? inv.invreq_amount ?? 0n;
 	const sats = msatToSats(amountMsat);
 	const description = inv.offer_description ?? '(no description)';
-	const issuer = inv.offer_issuer ?? '(unknown issuer)';
 	const payeeNode = toHex(proof.invoiceNodeId);
+	const issuer = issuerDisplay(inv.offer_issuer, toHex(inv.offer_issuer_id) || payeeNode);
 	const paymentHash = toHex(proof.invoicePaymentHash);
 	const preimage = toHex(proof.preimage);
 	const payerKey = toHex(proof.payerId);
@@ -238,6 +276,18 @@ function decodeProofView(raw: string): ProofView {
 	}));
 	const disclosure = [...revealed, ...hidden];
 
+	// Revealed blinded paths. A path TLV the payer omitted is simply absent here;
+	// the selective-disclosure panel already accounts for it as a hidden leaf.
+	const recordValue = (type: bigint): Uint8Array | undefined =>
+		decoded.records.find((r) => r.type === type)?.value;
+	// A proof reveals fields selectively, so a missing counterpart TLV means
+	// "not disclosed", not "malformed invoice" — only cross-check when both
+	// sides were actually revealed.
+	const { paths, pathsError } = zipPaymentPaths(recordValue(160n), recordValue(162n), {
+		requireBoth: false
+	});
+	const parsedOfferPaths = recordValue(16n) ? parseBlindedPaths(recordValue(16n)!) : undefined;
+
 	const checks: CheckResult[] = [
 		{ label: 'Preimage proves payment', detail: 'SHA-256(payment_preimage) = payment_hash', pass: verify.preimageOk },
 		{ label: 'Invoice signed by payee', detail: 'BIP-340 schnorr sig valid for invoice_node_id', pass: verify.invoiceSigOk },
@@ -265,7 +315,11 @@ function decodeProofView(raw: string): ProofView {
 		tlv,
 		disclosure,
 		revealedCount: revealed.length,
-		totalFields: disclosure.length
+		totalFields: disclosure.length,
+		paths,
+		pathsError,
+		offerPaths: parsedOfferPaths?.value ?? [],
+		offerPathsError: parsedOfferPaths?.error
 	};
 }
 
@@ -274,20 +328,36 @@ function decodeProofView(raw: string): ProofView {
 function decodeOfferView(raw: string): OfferView {
 	const o = decodeOffer(raw); // hand-written OfferFields: description/issuer/amount/issuer_id(hex)…
 	const description = o.description ?? '(no description)';
-	const issuer = o.issuer ?? '(unknown issuer)';
-	const amount = o.amount != null ? fmt(msatToSats(o.amount)) + ' sats' : 'any (payer chooses)';
 	const node = o.issuer_id ?? '';
+	// No offer_issuer text is normal: the issuer key is the identity.
+	const issuer = issuerDisplay(o.issuer, node);
+	const amount = o.amount != null ? fmt(msatToSats(o.amount)) + ' sats' : 'any (payer chooses)';
+
+	// offer_paths rides along as raw bytes on the TLV records; the hand-written
+	// OfferFields only keeps a hex string, so parse from the record directly.
+	const pathsRecord = o.records.find((r) => r.type === 16n);
+	const parsedPaths = pathsRecord ? parseBlindedPaths(pathsRecord.value) : undefined;
 
 	const fields: Field[] = [
 		mk('od', 'Description', description, { sans: true, raw: true }),
-		mk('oi', 'Issuer', issuer, { sans: true, raw: true, weight: '600' }),
+		...(o.issuer ? [mk('oi', 'Issuer', o.issuer, { sans: true, raw: true, weight: '600' })] : []),
 		mk('oa', 'Amount', amount, { sans: true, raw: true, color: 'var(--text2)' }),
-		mk('on', 'Issuer id', node, { copyable: true, a: 10, b: 8 }),
+		...(node ? [mk('on', 'Issuer id', node, { copyable: true, a: 10, b: 8 })] : []),
 		mk('oc', 'Chains', o.chains?.length ? `${o.chains.length} chain(s)` : 'bitcoin (mainnet)', { sans: true, raw: true }),
-		mk('oq', 'Quantity', o.quantity_max != null ? `max ${o.quantity_max}` : 'unbounded', { sans: true, raw: true })
+		mk('oq', 'Quantity', o.quantity_max != null ? `max ${o.quantity_max}` : 'unbounded', { sans: true, raw: true }),
+		...pathSummaryField('op', parsedPaths)
 	];
 
-	return { kind: 'offer', raw, description, issuer, amount, fields };
+	return {
+		kind: 'offer',
+		raw,
+		description,
+		issuer,
+		amount,
+		fields,
+		paths: parsedPaths?.value ?? [],
+		pathsError: parsedPaths?.error
+	};
 }
 
 // ---- invoice ----------------------------------------------------------------
@@ -297,8 +367,8 @@ function decodeInvoiceView(raw: string): InvoiceView {
 	const f = extractInvoiceFields(parseTlvStream(dec.data));
 	const sats = msatToSats(f.invoice_amount ?? f.invreq_amount ?? 0n);
 	const description = f.offer_description ?? '(no description)';
-	const issuer = f.offer_issuer ?? '(unknown issuer)';
 	const node = toHex(f.invoice_node_id);
+	const issuer = issuerDisplay(f.offer_issuer, toHex(f.offer_issuer_id) || node);
 	const paymentHash = toHex(f.invoice_payment_hash);
 	const created = f.invoice_created_at != null ? formatTimestamp(f.invoice_created_at) : '—';
 	const expiry =
@@ -306,16 +376,88 @@ function decodeInvoiceView(raw: string): InvoiceView {
 			? `${f.invoice_relative_expiry} s`
 			: '7200 s (2 h)';
 
+	// invoice_paths (payment routes) zipped with invoice_blindedpay — BOLT12
+	// requires exactly one blinded_payinfo per path, in the same order.
+	const { paths, pathsError, parsedPaths } = zipPaymentPaths(f.invoice_paths, f.invoice_blindedpay, {
+		requireBoth: true
+	});
+
+	// The offer's reply paths are reflected verbatim inside the invoice.
+	const parsedOfferPaths = f.offer_paths ? parseBlindedPaths(f.offer_paths) : undefined;
+
 	const fields: Field[] = [
 		mk('ia', 'Amount', fmt(sats) + ' sats', { sans: true, raw: true, weight: '600', color: 'var(--amber)' }),
 		mk('id', 'Description', description, { sans: true, raw: true }),
 		mk('in', 'Payee node', node, { copyable: true, a: 10, b: 8 }),
 		mk('iph', 'Payment hash', paymentHash, { copyable: true, a: 10, b: 8 }),
 		mk('iexp', 'Expiry', expiry, { sans: true, raw: true }),
-		mk('icr', 'Created at', created, { raw: true, size: '12.5px' })
+		mk('icr', 'Created at', created, { raw: true, size: '12.5px' }),
+		...pathSummaryField('ipp', parsedPaths)
 	];
 
-	return { kind: 'invoice', raw, amountSats: sats, description, issuer, fields };
+	return {
+		kind: 'invoice',
+		raw,
+		amountSats: sats,
+		description,
+		issuer,
+		fields,
+		paths,
+		pathsError,
+		offerPaths: parsedOfferPaths?.value ?? [],
+		offerPathsError: parsedOfferPaths?.error
+	};
+}
+
+/**
+ * Zip invoice_paths with invoice_blindedpay. BOLT12 requires exactly one
+ * blinded_payinfo per path, in order; a count mismatch is reported, not fatal,
+ * and whatever parsed is still shown.
+ *
+ * `requireBoth` is for complete invoices, where one side without the other is
+ * spec-invalid. Proofs reveal fields selectively, so a missing counterpart
+ * there means "not disclosed" and must not be flagged.
+ */
+function zipPaymentPaths(
+	pathsBytes: Uint8Array | undefined,
+	payinfoBytes: Uint8Array | undefined,
+	opts: { requireBoth: boolean }
+): { paths: BlindedPathView[]; pathsError?: string; parsedPaths?: { value: BlindedPathView[]; error?: string } } {
+	const parsedPaths = pathsBytes ? parseBlindedPaths(pathsBytes) : undefined;
+	const parsedPay = payinfoBytes ? parseBlindedPayinfos(payinfoBytes) : undefined;
+	let pathsError = parsedPaths?.error ?? parsedPay?.error;
+	const paths = parsedPaths?.value ?? [];
+	if (parsedPay && parsedPaths) {
+		// Compare whenever both TLVs parsed, even if one side came back empty:
+		// zero paths against N payinfos is still a mismatch.
+		if (parsedPay.value.length !== paths.length && !pathsError) {
+			pathsError = `invoice_blindedpay has ${parsedPay.value.length} entr${parsedPay.value.length === 1 ? 'y' : 'ies'} for ${paths.length} path(s) — BOLT12 requires exactly one per path`;
+		}
+		paths.forEach((p, i) => {
+			if (parsedPay.value[i]) p.payinfo = parsedPay.value[i];
+		});
+	} else if (!pathsError && opts.requireBoth && (!pathsBytes || !payinfoBytes)) {
+		// A complete invoice must carry both (BOLT12: a reader MUST reject an
+		// invoice whose invoice_paths or invoice_blindedpay is absent). Key off
+		// TLV presence, not parsed length.
+		pathsError = !pathsBytes
+			? 'invoice_paths missing — BOLT12 requires one or more blinded payment paths'
+			: 'invoice_blindedpay missing — BOLT12 requires one blinded_payinfo per path';
+	}
+	if (!pathsError && opts.requireBoth && paths.length === 0) {
+		pathsError = 'invoice_paths is empty — BOLT12 requires one or more blinded payment paths';
+	}
+	return { paths, pathsError, parsedPaths };
+}
+
+/** One-line summary for the decoded-fields grid; omitted when no path TLV exists. */
+function pathSummaryField(key: string, parsed: { value: BlindedPathView[]; error?: string } | undefined): Field[] {
+	if (!parsed) return [];
+	const hops = parsed.value.reduce((n, p) => n + p.hops.length, 0);
+	const summary = parsed.error
+		? `${parsed.value.length} path(s) decoded, then: ${parsed.error}`
+		: `${parsed.value.length} path(s) · ${hops} hop(s)`;
+	return [mk(key, 'Blinded paths', summary, { sans: true, raw: true, color: 'var(--violet)' })];
 }
 
 // ---- dispatch ---------------------------------------------------------------

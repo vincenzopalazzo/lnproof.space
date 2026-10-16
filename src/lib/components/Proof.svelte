@@ -3,6 +3,7 @@
 	import { goHome } from '$lib/store.svelte';
 	import { fmt, copyText, buildChecks } from '$lib/format';
 	import type { ProofView } from '$lib/decode';
+	import BlindedPaths from './BlindedPaths.svelte';
 
 	// +page only renders this when the active view is a proof.
 	const view = $derived(explorer.view as ProofView);
@@ -309,6 +310,26 @@
 			{/each}
 		</div>
 	</section>
+
+	{#if view.paths.length || view.pathsError}
+		<BlindedPaths
+			paths={view.paths}
+			error={view.pathsError}
+			title="Revealed payment paths"
+			purpose="invoice_paths the payer chose to disclose, with their blinded_payinfo. A path TLV omitted from the proof stays a hidden leaf above."
+			accent="amber"
+		/>
+	{/if}
+
+	{#if view.offerPaths.length || view.offerPathsError}
+		<BlindedPaths
+			paths={view.offerPaths}
+			error={view.offerPathsError}
+			title="Revealed offer reply paths"
+			purpose="offer_paths the payer disclosed — the onion-message routes back to the offer issuer."
+			accent="violet"
+		/>
+	{/if}
 
 	<!-- raw TLV inspector -->
 	<section

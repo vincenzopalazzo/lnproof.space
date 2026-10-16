@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { explorer, goHome } from '$lib/store.svelte';
 	import type { OfferView } from '$lib/decode';
+	import BlindedPaths from './BlindedPaths.svelte';
 
 	const view = $derived(explorer.view as OfferView);
 </script>
@@ -67,4 +68,14 @@
 			{/each}
 		</div>
 	</section>
+
+	{#if view.paths.length || view.pathsError}
+		<BlindedPaths
+			paths={view.paths}
+			error={view.pathsError}
+			title="Blinded paths"
+			purpose="offer_paths — onion-message routes a payer follows to request an invoice. The encrypted blobs are opaque outside the path."
+			accent="violet"
+		/>
+	{/if}
 </main>
