@@ -130,6 +130,17 @@ function formatTimestamp(ts: bigint): string {
 	return iso.slice(0, 10) + ' ' + iso.slice(11, 19) + ' UTC';
 }
 
+/**
+ * Headline issuer. `offer_issuer` is optional — an offer identified only by
+ * `offer_issuer_id` (or an invoice only by its node id) must show that key,
+ * not "(unknown issuer)".
+ */
+function issuerDisplay(name: string | undefined, nodeIdHex: string | undefined): string {
+	if (name) return name;
+	if (nodeIdHex) return short(nodeIdHex, 10, 8);
+	return '(unknown issuer)';
+}
+
 function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
 	if (a.length !== b.length) return false;
 	for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
@@ -219,8 +230,8 @@ function decodeProofView(raw: string): ProofView {
 	const amountMsat = inv.invoice_amount ?? inv.invreq_amount ?? 0n;
 	const sats = msatToSats(amountMsat);
 	const description = inv.offer_description ?? '(no description)';
-	const issuer = inv.offer_issuer ?? '(unknown issuer)';
 	const payeeNode = toHex(proof.invoiceNodeId);
+	const issuer = issuerDisplay(inv.offer_issuer, toHex(inv.offer_issuer_id) || payeeNode);
 	const paymentHash = toHex(proof.invoicePaymentHash);
 	const preimage = toHex(proof.preimage);
 	const payerKey = toHex(proof.payerId);
@@ -317,9 +328,10 @@ function decodeProofView(raw: string): ProofView {
 function decodeOfferView(raw: string): OfferView {
 	const o = decodeOffer(raw); // hand-written OfferFields: description/issuer/amount/issuer_id(hex)…
 	const description = o.description ?? '(no description)';
-	const issuer = o.issuer ?? '(unknown issuer)';
-	const amount = o.amount != null ? fmt(msatToSats(o.amount)) + ' sats' : 'any (payer chooses)';
 	const node = o.issuer_id ?? '';
+	// No offer_issuer text is normal: the issuer key is the identity.
+	const issuer = issuerDisplay(o.issuer, node);
+	const amount = o.amount != null ? fmt(msatToSats(o.amount)) + ' sats' : 'any (payer chooses)';
 
 	// offer_paths rides along as raw bytes on the TLV records; the hand-written
 	// OfferFields only keeps a hex string, so parse from the record directly.
@@ -328,9 +340,9 @@ function decodeOfferView(raw: string): OfferView {
 
 	const fields: Field[] = [
 		mk('od', 'Description', description, { sans: true, raw: true }),
-		mk('oi', 'Issuer', issuer, { sans: true, raw: true, weight: '600' }),
+		...(o.issuer ? [mk('oi', 'Issuer', o.issuer, { sans: true, raw: true, weight: '600' })] : []),
 		mk('oa', 'Amount', amount, { sans: true, raw: true, color: 'var(--text2)' }),
-		mk('on', 'Issuer id', node, { copyable: true, a: 10, b: 8 }),
+		...(node ? [mk('on', 'Issuer id', node, { copyable: true, a: 10, b: 8 })] : []),
 		mk('oc', 'Chains', o.chains?.length ? `${o.chains.length} chain(s)` : 'bitcoin (mainnet)', { sans: true, raw: true }),
 		mk('oq', 'Quantity', o.quantity_max != null ? `max ${o.quantity_max}` : 'unbounded', { sans: true, raw: true }),
 		...pathSummaryField('op', parsedPaths)
@@ -355,8 +367,8 @@ function decodeInvoiceView(raw: string): InvoiceView {
 	const f = extractInvoiceFields(parseTlvStream(dec.data));
 	const sats = msatToSats(f.invoice_amount ?? f.invreq_amount ?? 0n);
 	const description = f.offer_description ?? '(no description)';
-	const issuer = f.offer_issuer ?? '(unknown issuer)';
 	const node = toHex(f.invoice_node_id);
+	const issuer = issuerDisplay(f.offer_issuer, toHex(f.offer_issuer_id) || node);
 	const paymentHash = toHex(f.invoice_payment_hash);
 	const created = f.invoice_created_at != null ? formatTimestamp(f.invoice_created_at) : '—';
 	const expiry =
