@@ -57,7 +57,7 @@ const pathKey = point(0x03, 0x22);
 const hop1 = point(0x02, 0x33);
 const hop2 = point(0x03, 0x44);
 const blob1 = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
-const blob2 = new Uint8Array(65).fill(0xab); // > 1 byte, exercises multi-byte enclen
+const blob2 = new Uint8Array(300).fill(0xab); // enclen 0x012c: exercises the high byte of the u16 length
 
 // --- pubkey introduction, 2 hops ---
 const path = concat(intro, pathKey, new Uint8Array([2]), hop(hop1, blob1), hop(hop2, blob2));
@@ -68,7 +68,7 @@ check('intro is the pubkey', parsed.value[0]?.firstNode.kind === 'pubkey' && par
 check('first_path_key round-trips', parsed.value[0]?.firstPathKey === Buffer.from(pathKey).toString('hex'));
 check('two hops', parsed.value[0]?.hops.length === 2);
 check('hop 1 payload length', parsed.value[0]?.hops[0].encryptedLen === 4);
-check('hop 2 payload length', parsed.value[0]?.hops[1].encryptedLen === 65);
+check('hop 2 payload length uses the enclen high byte', parsed.value[0]?.hops[1].encryptedLen === 300);
 check('hop payload bytes round-trip', parsed.value[0]?.hops[0].encryptedHex === 'deadbeef');
 
 // --- sciddir introduction: direction byte 0x01 + 8-byte scid (block 800000, tx 7, vout 1) ---

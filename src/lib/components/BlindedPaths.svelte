@@ -22,7 +22,14 @@
 	// the status of a newer click.
 	let copySeq = 0;
 
-	onDestroy(() => clearTimeout(copiedTimer));
+	// Bumped on destroy so a clipboard write resolving after unmount cannot
+	// touch component state.
+	let destroyed = false;
+	onDestroy(() => {
+		destroyed = true;
+		copySeq++;
+		clearTimeout(copiedTimer);
+	});
 
 	async function copy(key: string, value: string) {
 		const seq = ++copySeq;
@@ -31,7 +38,7 @@
 		clearTimeout(copiedTimer);
 		copied = '';
 		await copyText(value);
-		if (seq !== copySeq) return; // a newer click superseded this one
+		if (destroyed || seq !== copySeq) return; // unmounted, or a newer click superseded this one
 		copied = key;
 		copiedTimer = setTimeout(() => {
 			copied = '';
